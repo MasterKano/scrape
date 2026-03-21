@@ -5,8 +5,9 @@ import csv
 import json
 import logging
 import sys
+import threading
 import time
-from collections import Counter
+from collections import Counter, deque
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -14,9 +15,14 @@ from typing import Any
 
 import requests
 
-FILE_NAME_PREFIX = "eex_power_futures_strip"
 API_BASE_URL = "https://api.eex-group.com/pub/market-data/table-data"
 ACCEPT_HEADER = "application/json, text/javascript, */*; q=0.01"
+RETRYABLE_HTTP_STATUSES = {429, 500, 502, 503, 504}
+
+MAIN_CSV_PREFIX = "CSV"
+FAILED_CSV_PREFIX = "FCSV"
+SUMMARY_JSON_PREFIX = "JSON"
+LOG_PREFIX = "LOG"
 
 REQUEST_HEADERS = {
     "accept": ACCEPT_HEADER,
@@ -52,6 +58,80 @@ AREAS = {
 
 MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 SORT_ORDER = {"Month": 1, "Quarter": 2, "Year": 3}
+
+_thread_local = threading.local()
+
+
+class GlobalRateLimiter:
+    def __init__(self, min_interval_seconds: float) -> None:
+        self.min_interval_seconds = max(0.0, min_interval_seconds)
+        self._lock = threading.Lock()
+        self._next_allowed_time = 0.0
+
+    def wait_for_slot(self) -> None:
+        if self.min_interval_seconds <= 0:
+            return
+
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                if now >= self._next_allowed_time:
+                    self._next_allowed_time = now + self.min_interval_seconds
+                    return
+                sleep_for = self._next_allowed_time - now
+
+            if sleep_for > 0:
+                time.sleep(sleep_for)
+
+
+class RateLimitCoordinator:
+    def __init__(
+        self,
+        threshold_count: int,
+        window_seconds: float,
+        cooldown_seconds: float,
+    ) -> None:
+        self.threshold_count = max(1, threshold_count)
+        self.window_seconds = max(0.1, window_seconds)
+        self.cooldown_seconds = max(0.0, cooldown_seconds)
+        self._lock = threading.Lock()
+        self._recent_429s: deque[float] = deque()
+        self._cooldown_until = 0.0
+
+    def wait_if_cooling_down(self) -> None:
+        while True:
+            with self._lock:
+                now = time.monotonic()
+                remaining = self._cooldown_until - now
+            if remaining <= 0:
+                return
+            time.sleep(min(remaining, 1.0))
+
+    def record_429_and_get_cooldown(self) -> float:
+        with self._lock:
+            now = time.monotonic()
+            self._recent_429s.append(now)
+
+            while self._recent_429s and now - self._recent_429s[0] > self.window_seconds:
+                self._recent_429s.popleft()
+
+            previous_cooldown_until = self._cooldown_until
+
+            if len(self._recent_429s) >= self.threshold_count:
+                self._cooldown_until = max(self._cooldown_until, now + self.cooldown_seconds)
+                self._recent_429s.clear()
+
+            added_cooldown = max(0.0, self._cooldown_until - max(now, previous_cooldown_until))
+            return added_cooldown
+
+
+def get_thread_session() -> requests.Session:
+    session = getattr(_thread_local, "session", None)
+    if session is None:
+        session = requests.Session()
+        session.headers.update(REQUEST_HEADERS)
+        _thread_local.session = session
+    return session
 
 
 def parse_args() -> argparse.Namespace:
@@ -90,20 +170,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--request-gap-seconds",
         type=float,
-        default=1.5,
-        help="Delay between requests. Default: 1.5",
+        default=1.0,
+        help="Minimum gap between request starts across all workers. Default: 1.0",
     )
     parser.add_argument(
         "--max-retries",
         type=int,
-        default=1,
-        help="Retry count for request failures. Default: 1",
+        default=2,
+        help="Retry count for request failures. Default: 2",
     )
     parser.add_argument(
         "--retry-delay-seconds",
         type=float,
-        default=3.0,
-        help="Base retry delay. Default: 3.0",
+        default=5.0,
+        help="Base retry delay. Default: 5.0",
     )
     parser.add_argument(
         "--request-timeout-seconds",
@@ -119,8 +199,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-workers",
         type=int,
-        default=1,
-        help="Number of parallel workers. Default: 1",
+        default=2,
+        help="Number of parallel workers. Default: 2",
+    )
+    parser.add_argument(
+        "--cooldown-threshold",
+        type=int,
+        default=3,
+        help="Trigger a global cooldown after this many 429s within the cooldown window. Default: 3",
+    )
+    parser.add_argument(
+        "--cooldown-window-seconds",
+        type=float,
+        default=15.0,
+        help="Window for counting clustered 429s. Default: 15.0",
+    )
+    parser.add_argument(
+        "--cooldown-seconds",
+        type=float,
+        default=30.0,
+        help="Global cooldown length after clustered 429s. Default: 30.0",
     )
     return parser.parse_args()
 
@@ -309,24 +407,44 @@ def build_request_params(contract: dict[str, Any], start_date_str: str, end_date
     }
 
 
+def get_retry_wait_seconds(
+    response: requests.Response | None,
+    attempt: int,
+    retry_delay_seconds: float,
+) -> float:
+    wait_seconds = retry_delay_seconds * (2 ** attempt)
+
+    if response is not None and response.status_code == 429:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                wait_seconds = max(wait_seconds, float(retry_after))
+            except ValueError:
+                pass
+
+    return wait_seconds
+
+
 def fetch_one(
     logger: logging.Logger,
     session: requests.Session,
+    rate_limiter: GlobalRateLimiter,
+    rate_limit_coordinator: RateLimitCoordinator,
     contract: dict[str, Any],
     trade_date_str: str,
     start_date_str: str,
     end_date_str: str,
-    request_gap_seconds: float,
     max_retries: int,
     retry_delay_seconds: float,
     request_timeout_seconds: float,
     allow_fallback: bool,
 ) -> dict[str, Any]:
     params = build_request_params(contract, start_date_str, end_date_str)
+    last_http_status: int | None = None
 
     for attempt in range(max_retries + 1):
-        if request_gap_seconds > 0:
-            time.sleep(request_gap_seconds)
+        rate_limit_coordinator.wait_if_cooling_down()
+        rate_limiter.wait_for_slot()
 
         try:
             response = session.get(
@@ -334,79 +452,9 @@ def fetch_one(
                 params=params,
                 timeout=request_timeout_seconds,
             )
-
-            if response.status_code == 429 and attempt < max_retries:
-                retry_after = response.headers.get("Retry-After")
-                wait_seconds = retry_delay_seconds * (2 ** attempt)
-
-                if retry_after:
-                    try:
-                        wait_seconds = max(wait_seconds, float(retry_after))
-                    except ValueError:
-                        pass
-
-                logger.warning(
-                    "Rate limited for %s %s %s. Retrying in %.1fs.",
-                    contract["area"],
-                    contract["maturityType"],
-                    contract["delivery"],
-                    wait_seconds,
-                )
-                time.sleep(wait_seconds)
-                continue
-
-            if not response.ok:
-                return build_result(
-                    contract,
-                    trade_date_str,
-                    status="http_error",
-                    httpStatus=response.status_code,
-                    errorMessage=f"HTTP {response.status_code}",
-                )
-
-            try:
-                payload = response.json()
-            except ValueError as exc:
-                return build_result(
-                    contract,
-                    trade_date_str,
-                    status="json_error",
-                    errorMessage=f"JSON parse failed: {exc}",
-                )
-
-            headers_row = payload.get("header", [])
-            data_rows = payload.get("data", [])
-
-            objects: list[dict[str, Any]] = []
-            for row in data_rows:
-                if isinstance(row, list):
-                    objects.append(dict(zip(headers_row, row)))
-                elif isinstance(row, dict):
-                    objects.append(row)
-
-            match, status = select_best_row(objects, trade_date_str, allow_fallback)
-
-            if not match:
-                return build_result(
-                    contract,
-                    trade_date_str,
-                    status="no_row",
-                    errorMessage=f"No row found for {trade_date_str}",
-                )
-
-            return build_result(
-                contract,
-                trade_date_str,
-                tradeDate=match.get("tradeDate"),
-                status=status,
-                settlementPrice=normalize_number(first_defined(match, ["settlPx", "settlementPrice", "settlPrice"])),
-                volume=normalize_number(first_defined(match, ["totVolTrd", "volume", "totalVolume"])),
-                grossOpenInterest=normalize_number(first_defined(match, ["grossOpenInt", "grossOpenInterest"])),
-            )
-
         except requests.RequestException as exc:
             if attempt < max_retries:
-                wait_seconds = retry_delay_seconds * (2 ** attempt)
+                wait_seconds = get_retry_wait_seconds(None, attempt, retry_delay_seconds)
                 logger.warning(
                     "Request error for %s %s %s: %s. Retrying in %.1fs.",
                     contract["area"],
@@ -425,11 +473,96 @@ def fetch_one(
                 errorMessage=str(exc),
             )
 
+        last_http_status = response.status_code
+
+        if response.status_code == 429:
+            added_cooldown = rate_limit_coordinator.record_429_and_get_cooldown()
+            if added_cooldown > 0:
+                logger.warning(
+                    "Global cooldown triggered after clustered 429s. Pausing new requests for %.1fs.",
+                    added_cooldown,
+                )
+
+        if response.status_code in RETRYABLE_HTTP_STATUSES and attempt < max_retries:
+            wait_seconds = get_retry_wait_seconds(response, attempt, retry_delay_seconds)
+            logger.warning(
+                "Retryable HTTP status for %s %s %s: %s. Retrying in %.1fs.",
+                contract["area"],
+                contract["maturityType"],
+                contract["delivery"],
+                response.status_code,
+                wait_seconds,
+            )
+            time.sleep(wait_seconds)
+            continue
+
+        if response.status_code == 429:
+            return build_result(
+                contract,
+                trade_date_str,
+                status="rate_limited",
+                httpStatus=response.status_code,
+                errorMessage="HTTP 429 rate limited after retries",
+            )
+
+        if not response.ok:
+            return build_result(
+                contract,
+                trade_date_str,
+                status="http_error",
+                httpStatus=response.status_code,
+                errorMessage=f"HTTP {response.status_code}",
+            )
+
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            return build_result(
+                contract,
+                trade_date_str,
+                status="json_error",
+                errorMessage=f"JSON parse failed: {exc}",
+                httpStatus=last_http_status,
+            )
+
+        headers_row = payload.get("header", [])
+        data_rows = payload.get("data", [])
+
+        objects: list[dict[str, Any]] = []
+        for row in data_rows:
+            if isinstance(row, list):
+                objects.append(dict(zip(headers_row, row)))
+            elif isinstance(row, dict):
+                objects.append(row)
+
+        match, status = select_best_row(objects, trade_date_str, allow_fallback)
+
+        if not match:
+            return build_result(
+                contract,
+                trade_date_str,
+                status="no_row",
+                errorMessage=f"No row found for {trade_date_str}",
+                httpStatus=last_http_status,
+            )
+
+        return build_result(
+            contract,
+            trade_date_str,
+            tradeDate=match.get("tradeDate"),
+            status=status,
+            settlementPrice=normalize_number(first_defined(match, ["settlPx", "settlementPrice", "settlPrice"])),
+            volume=normalize_number(first_defined(match, ["totVolTrd", "volume", "totalVolume"])),
+            grossOpenInterest=normalize_number(first_defined(match, ["grossOpenInt", "grossOpenInterest"])),
+            httpStatus=last_http_status,
+        )
+
     return build_result(
         contract,
         trade_date_str,
-        status="fetch_error",
-        errorMessage="Unexpected retry loop exit",
+        status="rate_limited" if last_http_status == 429 else "fetch_error",
+        httpStatus=last_http_status,
+        errorMessage="HTTP 429 rate limited after retries" if last_http_status == 429 else "Unexpected retry loop exit",
     )
 
 
@@ -509,31 +642,32 @@ def setup_logging(log_path: Path) -> logging.Logger:
 
 def process_contract(
     logger: logging.Logger,
+    rate_limiter: GlobalRateLimiter,
+    rate_limit_coordinator: RateLimitCoordinator,
     contract: dict[str, Any],
     trade_date_str: str,
     start_date_str: str,
     end_date_str: str,
-    request_gap_seconds: float,
     max_retries: int,
     retry_delay_seconds: float,
     request_timeout_seconds: float,
     allow_fallback: bool,
 ) -> dict[str, Any]:
-    with requests.Session() as session:
-        session.headers.update(REQUEST_HEADERS)
-        return fetch_one(
-            logger=logger,
-            session=session,
-            contract=contract,
-            trade_date_str=trade_date_str,
-            start_date_str=start_date_str,
-            end_date_str=end_date_str,
-            request_gap_seconds=request_gap_seconds,
-            max_retries=max_retries,
-            retry_delay_seconds=retry_delay_seconds,
-            request_timeout_seconds=request_timeout_seconds,
-            allow_fallback=allow_fallback,
-        )
+    session = get_thread_session()
+    return fetch_one(
+        logger=logger,
+        session=session,
+        rate_limiter=rate_limiter,
+        rate_limit_coordinator=rate_limit_coordinator,
+        contract=contract,
+        trade_date_str=trade_date_str,
+        start_date_str=start_date_str,
+        end_date_str=end_date_str,
+        max_retries=max_retries,
+        retry_delay_seconds=retry_delay_seconds,
+        request_timeout_seconds=request_timeout_seconds,
+        allow_fallback=allow_fallback,
+    )
 
 
 def main() -> None:
@@ -568,14 +702,20 @@ def main() -> None:
     start_date_str = fmt_date(start_date)
     end_date_str = fmt_date(requested_trade_date)
 
-    timestamp_suffix = datetime.now().strftime("%H%M")
+    timestamp_suffix = datetime.now().strftime("%d-%m-%y_%H%M")
 
-    all_csv_path = output_dir / f"{FILE_NAME_PREFIX}_{trade_date_str}_{timestamp_suffix}.csv"
-    failed_csv_path = output_dir / f"{FILE_NAME_PREFIX}_failed_{trade_date_str}_{timestamp_suffix}.csv"
-    summary_json_path = output_dir / f"{FILE_NAME_PREFIX}_summary_{trade_date_str}_{timestamp_suffix}.json"
-    log_path = output_dir / f"{FILE_NAME_PREFIX}_log_{trade_date_str}_{timestamp_suffix}.log"
+    all_csv_path = output_dir / f"{MAIN_CSV_PREFIX}_[{timestamp_suffix}].csv"
+    failed_csv_path = output_dir / f"{FAILED_CSV_PREFIX}_[{timestamp_suffix}].csv"
+    summary_json_path = output_dir / f"{SUMMARY_JSON_PREFIX}_[{timestamp_suffix}].json"
+    log_path = output_dir / f"{LOG_PREFIX}_[{timestamp_suffix}].log"
 
     logger = setup_logging(log_path)
+    rate_limiter = GlobalRateLimiter(args.request_gap_seconds)
+    rate_limit_coordinator = RateLimitCoordinator(
+        threshold_count=args.cooldown_threshold,
+        window_seconds=args.cooldown_window_seconds,
+        cooldown_seconds=args.cooldown_seconds,
+    )
 
     area_filter = parse_area_filter(args.areas)
 
@@ -595,12 +735,23 @@ def main() -> None:
     logger.info("Run mode: %s", run_mode)
     logger.info("Built %s contracts.", len(contracts))
     logger.info("Date window: %s -> %s", start_date_str, end_date_str)
+    logger.info(
+        "Global pacing: one request start every %.2fs across %s worker(s).",
+        args.request_gap_seconds,
+        args.max_workers,
+    )
+    logger.info(
+        "429 cooldown rule: %s hit(s) within %.1fs triggers a %.1fs global pause.",
+        args.cooldown_threshold,
+        args.cooldown_window_seconds,
+        args.cooldown_seconds,
+    )
 
     results: list[dict[str, Any]] = []
     start_ts = time.time()
     future_to_meta: dict[Any, tuple[int, dict[str, Any]]] = {}
 
-    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+    with ThreadPoolExecutor(max_workers=args.max_workers, thread_name_prefix="eex") as executor:
         for index, contract in enumerate(contracts, start=1):
             logger.info(
                 "[queued %s/%s] %s %s %s (%s, %s)",
@@ -616,11 +767,12 @@ def main() -> None:
             future = executor.submit(
                 process_contract,
                 logger,
+                rate_limiter,
+                rate_limit_coordinator,
                 contract,
                 trade_date_str,
                 start_date_str,
                 end_date_str,
-                args.request_gap_seconds,
                 args.max_retries,
                 args.retry_delay_seconds,
                 args.request_timeout_seconds,
@@ -691,6 +843,13 @@ def main() -> None:
     else:
         logger.info("No failed rows. Failed CSV not created.")
 
+    contracts_per_minute = round((len(results) / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
+    avg_seconds_per_contract = round(duration_seconds / len(results), 2) if results else 0.0
+
+    logger.info("Duration seconds: %s", duration_seconds)
+    logger.info("Throughput contracts/minute: %s", contracts_per_minute)
+    logger.info("Average seconds/contract: %s", avg_seconds_per_contract)
+
     summary_payload = {
         "runMode": run_mode,
         "tradeDate": trade_date_str,
@@ -708,6 +867,11 @@ def main() -> None:
         "failedContracts": len(failed_rows),
         "statusSummary": dict(summary),
         "durationSeconds": duration_seconds,
+        "throughputContractsPerMinute": contracts_per_minute,
+        "averageSecondsPerContract": avg_seconds_per_contract,
+        "cooldownThreshold": args.cooldown_threshold,
+        "cooldownWindowSeconds": args.cooldown_window_seconds,
+        "cooldownSeconds": args.cooldown_seconds,
         "files": {
             "mainCsv": str(all_csv_path),
             "failedCsv": str(failed_csv_path) if failed_rows else None,
