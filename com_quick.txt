@@ -1,6 +1,9 @@
 EEX SCRAPER - QUICK USE
 =======================
 
+Future update master file:
+python3 eex_scraper.py --mode range --start-date YYYY-MM-DD --end-date YYYY-MM-DD --master-file master/eex_master.csv
+
 Install dependencies
 pip install -r requirements.txt
 
