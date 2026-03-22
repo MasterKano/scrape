@@ -1,0 +1,133 @@
+EEX SCRAPER - FULL REFERENCE
+============================
+
+INSTALL
+-------
+pip install -r requirements.txt
+
+CORE MODES
+----------
+Selected-date mode
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20
+
+Selected-date mode, small test
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-contracts 5
+
+Selected-date mode, 2 workers
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-workers 2 --request-gap-seconds 1.0
+
+Selected-date mode, no fallback
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --no-fallback
+
+Range mode
+python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20
+
+Range mode, small test
+python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20 --max-contracts 5
+
+Range mode, one contract
+python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20 --max-contracts 1
+
+Full-history mode
+python3 eex_scraper.py --mode full-history --end-date 2026-03-20 --contract-anchor-date 2026-03-20
+
+Full-history mode with custom start
+python3 eex_scraper.py --mode full-history --end-date 2026-03-20 --contract-anchor-date 2026-03-20 --full-history-start-date 2025-01-01
+
+FILTERING
+---------
+Only selected areas
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --areas DE,GB,FR
+
+Cap number of contracts
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-contracts 10
+
+RATE / RETRY TUNING
+-------------------
+Safer run
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-workers 1 --request-gap-seconds 1.5
+
+Moderate run
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-workers 2 --request-gap-seconds 1.0
+
+Increase retries
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-retries 3
+
+Adjust adaptive pacing ceiling
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --request-gap-seconds 1.0 --max-request-gap-seconds 4.0
+
+Adjust cooldown behaviour
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --cooldown-threshold 3 --cooldown-window-seconds 15 --cooldown-seconds 30
+
+Adjust adaptive relaxation
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --relax-after-seconds 60 --relax-factor 0.9
+
+RERUN FAILED
+------------
+Rerun from failed CSV
+python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv
+
+Rerun failed more conservatively
+python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv --max-workers 1 --request-gap-seconds 1.5
+
+Rerun failed with more retries
+python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv --max-retries 3
+
+OUTPUT LOCATION
+---------------
+Write to another folder
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --output-dir MyOutput
+
+FILE / OUTPUT INSPECTION
+------------------------
+List current folder
+ls
+
+List Output folder
+ls Output
+
+Preview CSV
+head -n 10 Output/CSV_[21-03-26_0836].csv
+
+Preview failed CSV
+head -n 10 Output/FCSV_[21-03-26_0641].csv
+
+Preview JSON summary
+head -n 40 Output/JSON_[21-03-26_0836].json
+
+Search for rate-limited rows in a CSV
+grep rate_limited Output/FCSV_[21-03-26_0641].csv
+
+Count lines in a CSV
+wc -l Output/CSV_[21-03-26_0836].csv
+
+TERMINAL / FILE MANAGEMENT
+--------------------------
+Stop a running scrape
+Ctrl+C
+
+Rename a file
+mv old_name.py new_name.py
+
+Delete a file
+rm filename.py
+
+Delete an output file
+rm Output/CSV_[21-03-26_0836].csv
+
+GIT
+---
+Check status
+git status
+
+Stage all changes
+git add .
+
+Commit changes
+git commit -m "Update EEX scraper"
+
+Push changes
+git push
+
+Pull latest changes
+git pull

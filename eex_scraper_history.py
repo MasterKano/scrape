@@ -136,11 +136,11 @@ def get_thread_session() -> requests.Session:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Download EEX power futures data and save CSV outputs."
+        description="Download EEX power futures historical data and save one CSV row per trade date."
     )
     parser.add_argument(
         "--trade-date",
-        help="Trade date in YYYY-MM-DD format. Required unless using --rerun-failed-from.",
+        help="Anchor date in YYYY-MM-DD format used to build the contract set. Required unless using --rerun-failed-from.",
     )
     parser.add_argument(
         "--areas",
@@ -159,13 +159,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--rerun-failed-from",
-        help="Path to a previous full-results CSV or failed-results CSV. Re-runs only non-ok rows.",
+        help="Path to a previous main CSV or failed CSV. Re-runs only non-ok contracts.",
     )
     parser.add_argument(
         "--lookback-days",
         type=int,
-        default=7,
-        help="Number of days to look back for rows. Default: 7",
+        default=30,
+        help="Number of days of history to request per contract. Default: 30",
     )
     parser.add_argument(
         "--request-gap-seconds",
@@ -192,15 +192,10 @@ def parse_args() -> argparse.Namespace:
         help="Per-request timeout. Default: 20",
     )
     parser.add_argument(
-        "--no-fallback",
-        action="store_true",
-        help="Disable fallback to the latest available row before the trade date.",
-    )
-    parser.add_argument(
         "--max-workers",
         type=int,
-        default=2,
-        help="Number of parallel workers. Default: 2",
+        default=1,
+        help="Number of parallel workers. Default: 1",
     )
     parser.add_argument(
         "--cooldown-threshold",
@@ -286,51 +281,6 @@ def parse_area_filter(raw: str | None) -> list[str] | None:
     return areas or None
 
 
-def build_result(contract: dict[str, Any], trade_date_str: str, **overrides: Any) -> dict[str, Any]:
-    result = {
-        "area": contract["area"],
-        "maturityType": contract["maturityType"],
-        "delivery": contract["delivery"],
-        "requestedTradeDate": trade_date_str,
-        "tradeDate": None,
-        "status": "unknown",
-        "settlementPrice": None,
-        "volume": None,
-        "grossOpenInterest": None,
-        "shortCode": contract["shortCode"],
-        "maturity": contract["maturity"],
-        "assumedCode": contract["assumedCode"],
-        "httpStatus": None,
-        "errorMessage": None,
-    }
-    result.update(overrides)
-    return result
-
-
-def select_best_row(
-    rows: list[dict[str, Any]],
-    requested_trade_date: str,
-    allow_fallback: bool,
-) -> tuple[dict[str, Any] | None, str]:
-    exact = next((row for row in rows if row.get("tradeDate") == requested_trade_date), None)
-    if exact:
-        return exact, "ok"
-
-    if not allow_fallback:
-        return None, "no_row"
-
-    previous_rows = [
-        row for row in rows
-        if isinstance(row.get("tradeDate"), str) and row["tradeDate"] <= requested_trade_date
-    ]
-    previous_rows.sort(key=lambda row: row["tradeDate"], reverse=True)
-
-    if previous_rows:
-        return previous_rows[0], "fallback_previous_trade_day"
-
-    return None, "no_row"
-
-
 def build_contracts(
     trade_date: date,
     area_filter: list[str] | None,
@@ -407,6 +357,108 @@ def build_request_params(contract: dict[str, Any], start_date_str: str, end_date
     }
 
 
+def build_error_row(
+    contract: dict[str, Any],
+    start_date_str: str,
+    end_date_str: str,
+    status: str,
+    error_message: str | None = None,
+    http_status: int | None = None,
+) -> dict[str, Any]:
+    return {
+        "area": contract["area"],
+        "maturityType": contract["maturityType"],
+        "delivery": contract["delivery"],
+        "windowStartDate": start_date_str,
+        "windowEndDate": end_date_str,
+        "tradeDate": None,
+        "status": status,
+        "settlementPrice": None,
+        "volume": None,
+        "grossOpenInterest": None,
+        "shortCode": contract["shortCode"],
+        "maturity": contract["maturity"],
+        "assumedCode": contract["assumedCode"],
+        "httpStatus": http_status,
+        "errorMessage": error_message,
+    }
+
+
+def build_data_row(
+    contract: dict[str, Any],
+    start_date_str: str,
+    end_date_str: str,
+    row: dict[str, Any],
+    http_status: int | None,
+) -> dict[str, Any]:
+    return {
+        "area": contract["area"],
+        "maturityType": contract["maturityType"],
+        "delivery": contract["delivery"],
+        "windowStartDate": start_date_str,
+        "windowEndDate": end_date_str,
+        "tradeDate": row.get("tradeDate"),
+        "status": "ok",
+        "settlementPrice": normalize_number(first_defined(row, ["settlPx", "settlementPrice", "settlPrice"])),
+        "volume": normalize_number(first_defined(row, ["totVolTrdd", "totVolTrd", "volume", "totalVolume"])),
+        "grossOpenInterest": normalize_number(first_defined(row, ["grossOpenInt", "grossOpenInterest"])),
+        "shortCode": contract["shortCode"],
+        "maturity": contract["maturity"],
+        "assumedCode": contract["assumedCode"],
+        "httpStatus": http_status,
+        "errorMessage": None,
+    }
+
+
+def dedupe_contracts(contracts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[tuple[str, str, str, str]] = set()
+    unique_contracts: list[dict[str, Any]] = []
+
+    for contract in contracts:
+        key = (
+            contract["area"],
+            contract["shortCode"],
+            contract["maturityType"],
+            contract["maturity"],
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_contracts.append(contract)
+
+    return unique_contracts
+
+
+def load_contracts_from_previous_csv(csv_path: Path) -> tuple[list[dict[str, Any]], str | None]:
+    contracts: list[dict[str, Any]] = []
+    inferred_trade_date: str | None = None
+
+    with csv_path.open("r", newline="", encoding="utf-8-sig") as handle:
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+
+    for row in rows:
+        status = (row.get("status") or "").strip()
+        should_include = status != "ok" if status else True
+        if not should_include:
+            continue
+
+        window_end_date = (row.get("windowEndDate") or row.get("requestedTradeDate") or "").strip()
+        if window_end_date and inferred_trade_date is None:
+            inferred_trade_date = window_end_date
+
+        contracts.append({
+            "area": row["area"],
+            "shortCode": row["shortCode"],
+            "maturityType": row["maturityType"],
+            "maturity": row["maturity"],
+            "delivery": row["delivery"],
+            "assumedCode": parse_bool(row.get("assumedCode")),
+        })
+
+    return dedupe_contracts(contracts), inferred_trade_date
+
+
 def get_retry_wait_seconds(
     response: requests.Response | None,
     attempt: int,
@@ -425,20 +477,18 @@ def get_retry_wait_seconds(
     return wait_seconds
 
 
-def fetch_one(
+def fetch_one_contract_history(
     logger: logging.Logger,
     session: requests.Session,
     rate_limiter: GlobalRateLimiter,
     rate_limit_coordinator: RateLimitCoordinator,
     contract: dict[str, Any],
-    trade_date_str: str,
     start_date_str: str,
     end_date_str: str,
     max_retries: int,
     retry_delay_seconds: float,
     request_timeout_seconds: float,
-    allow_fallback: bool,
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
     params = build_request_params(contract, start_date_str, end_date_str)
     last_http_status: int | None = None
 
@@ -466,12 +516,15 @@ def fetch_one(
                 time.sleep(wait_seconds)
                 continue
 
-            return build_result(
-                contract,
-                trade_date_str,
-                status="fetch_error",
-                errorMessage=str(exc),
-            )
+            return [
+                build_error_row(
+                    contract=contract,
+                    start_date_str=start_date_str,
+                    end_date_str=end_date_str,
+                    status="fetch_error",
+                    error_message=str(exc),
+                )
+            ]
 
         last_http_status = response.status_code
 
@@ -497,33 +550,42 @@ def fetch_one(
             continue
 
         if response.status_code == 429:
-            return build_result(
-                contract,
-                trade_date_str,
-                status="rate_limited",
-                httpStatus=response.status_code,
-                errorMessage="HTTP 429 rate limited after retries",
-            )
+            return [
+                build_error_row(
+                    contract=contract,
+                    start_date_str=start_date_str,
+                    end_date_str=end_date_str,
+                    status="rate_limited",
+                    error_message="HTTP 429 rate limited after retries",
+                    http_status=response.status_code,
+                )
+            ]
 
         if not response.ok:
-            return build_result(
-                contract,
-                trade_date_str,
-                status="http_error",
-                httpStatus=response.status_code,
-                errorMessage=f"HTTP {response.status_code}",
-            )
+            return [
+                build_error_row(
+                    contract=contract,
+                    start_date_str=start_date_str,
+                    end_date_str=end_date_str,
+                    status="http_error",
+                    error_message=f"HTTP {response.status_code}",
+                    http_status=response.status_code,
+                )
+            ]
 
         try:
             payload = response.json()
         except ValueError as exc:
-            return build_result(
-                contract,
-                trade_date_str,
-                status="json_error",
-                errorMessage=f"JSON parse failed: {exc}",
-                httpStatus=last_http_status,
-            )
+            return [
+                build_error_row(
+                    contract=contract,
+                    start_date_str=start_date_str,
+                    end_date_str=end_date_str,
+                    status="json_error",
+                    error_message=f"JSON parse failed: {exc}",
+                    http_status=last_http_status,
+                )
+            ]
 
         headers_row = payload.get("header", [])
         data_rows = payload.get("data", [])
@@ -535,35 +597,42 @@ def fetch_one(
             elif isinstance(row, dict):
                 objects.append(row)
 
-        match, status = select_best_row(objects, trade_date_str, allow_fallback)
+        if not objects:
+            return [
+                build_error_row(
+                    contract=contract,
+                    start_date_str=start_date_str,
+                    end_date_str=end_date_str,
+                    status="no_row",
+                    error_message=f"No rows returned for {start_date_str} -> {end_date_str}",
+                    http_status=last_http_status,
+                )
+            ]
 
-        if not match:
-            return build_result(
-                contract,
-                trade_date_str,
-                status="no_row",
-                errorMessage=f"No row found for {trade_date_str}",
-                httpStatus=last_http_status,
+        result_rows = [
+            build_data_row(
+                contract=contract,
+                start_date_str=start_date_str,
+                end_date_str=end_date_str,
+                row=row,
+                http_status=last_http_status,
             )
+            for row in objects
+        ]
 
-        return build_result(
-            contract,
-            trade_date_str,
-            tradeDate=match.get("tradeDate"),
-            status=status,
-            settlementPrice=normalize_number(first_defined(match, ["settlPx", "settlementPrice", "settlPrice"])),
-            volume=normalize_number(first_defined(match, ["totVolTrd", "volume", "totalVolume"])),
-            grossOpenInterest=normalize_number(first_defined(match, ["grossOpenInt", "grossOpenInterest"])),
-            httpStatus=last_http_status,
+        result_rows.sort(key=lambda r: r["tradeDate"] or "", reverse=True)
+        return result_rows
+
+    return [
+        build_error_row(
+            contract=contract,
+            start_date_str=start_date_str,
+            end_date_str=end_date_str,
+            status="rate_limited" if last_http_status == 429 else "fetch_error",
+            error_message="HTTP 429 rate limited after retries" if last_http_status == 429 else "Unexpected retry loop exit",
+            http_status=last_http_status,
         )
-
-    return build_result(
-        contract,
-        trade_date_str,
-        status="rate_limited" if last_http_status == 429 else "fetch_error",
-        httpStatus=last_http_status,
-        errorMessage="HTTP 429 rate limited after retries" if last_http_status == 429 else "Unexpected retry loop exit",
-    )
+    ]
 
 
 def write_csv(rows: list[dict[str, Any]], file_path: Path) -> None:
@@ -571,7 +640,8 @@ def write_csv(rows: list[dict[str, Any]], file_path: Path) -> None:
         "area",
         "maturityType",
         "delivery",
-        "requestedTradeDate",
+        "windowStartDate",
+        "windowEndDate",
         "tradeDate",
         "status",
         "settlementPrice",
@@ -590,38 +660,8 @@ def write_csv(rows: list[dict[str, Any]], file_path: Path) -> None:
         writer.writerows(rows)
 
 
-def load_contracts_from_previous_csv(csv_path: Path) -> tuple[list[dict[str, Any]], str | None]:
-    contracts: list[dict[str, Any]] = []
-    inferred_trade_date: str | None = None
-
-    with csv_path.open("r", newline="", encoding="utf-8-sig") as handle:
-        reader = csv.DictReader(handle)
-        rows = list(reader)
-
-    for row in rows:
-        status = (row.get("status") or "").strip()
-        should_include = status != "ok" if status else True
-        if not should_include:
-            continue
-
-        requested_trade_date = (row.get("requestedTradeDate") or "").strip()
-        if requested_trade_date and inferred_trade_date is None:
-            inferred_trade_date = requested_trade_date
-
-        contracts.append({
-            "area": row["area"],
-            "shortCode": row["shortCode"],
-            "maturityType": row["maturityType"],
-            "maturity": row["maturity"],
-            "delivery": row["delivery"],
-            "assumedCode": parse_bool(row.get("assumedCode")),
-        })
-
-    return contracts, inferred_trade_date
-
-
 def setup_logging(log_path: Path) -> logging.Logger:
-    logger = logging.getLogger("eex_scraper")
+    logger = logging.getLogger("eex_scraper_history")
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
 
@@ -645,28 +685,24 @@ def process_contract(
     rate_limiter: GlobalRateLimiter,
     rate_limit_coordinator: RateLimitCoordinator,
     contract: dict[str, Any],
-    trade_date_str: str,
     start_date_str: str,
     end_date_str: str,
     max_retries: int,
     retry_delay_seconds: float,
     request_timeout_seconds: float,
-    allow_fallback: bool,
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
     session = get_thread_session()
-    return fetch_one(
+    return fetch_one_contract_history(
         logger=logger,
         session=session,
         rate_limiter=rate_limiter,
         rate_limit_coordinator=rate_limit_coordinator,
         contract=contract,
-        trade_date_str=trade_date_str,
         start_date_str=start_date_str,
         end_date_str=end_date_str,
         max_retries=max_retries,
         retry_delay_seconds=retry_delay_seconds,
         request_timeout_seconds=request_timeout_seconds,
-        allow_fallback=allow_fallback,
     )
 
 
@@ -695,7 +731,7 @@ def main() -> None:
 
     trade_date_str = args.trade_date or inferred_trade_date
     if not trade_date_str:
-        raise ValueError("Provide --trade-date, or use --rerun-failed-from with a CSV that contains requestedTradeDate.")
+        raise ValueError("Provide --trade-date, or use --rerun-failed-from with a CSV containing windowEndDate or requestedTradeDate.")
 
     requested_trade_date = parse_trade_date(trade_date_str)
     start_date = requested_trade_date - timedelta(days=args.lookback_days)
@@ -734,7 +770,7 @@ def main() -> None:
 
     logger.info("Run mode: %s", run_mode)
     logger.info("Built %s contracts.", len(contracts))
-    logger.info("Date window: %s -> %s", start_date_str, end_date_str)
+    logger.info("History window: %s -> %s", start_date_str, end_date_str)
     logger.info(
         "Global pacing: one request start every %.2fs across %s worker(s).",
         args.request_gap_seconds,
@@ -770,20 +806,18 @@ def main() -> None:
                 rate_limiter,
                 rate_limit_coordinator,
                 contract,
-                trade_date_str,
                 start_date_str,
                 end_date_str,
                 args.max_retries,
                 args.retry_delay_seconds,
                 args.request_timeout_seconds,
-                not args.no_fallback,
             )
             future_to_meta[future] = (index, contract)
 
         for future in as_completed(future_to_meta):
             index, contract = future_to_meta[future]
             try:
-                result = future.result()
+                contract_rows = future.result()
             except Exception as exc:
                 logger.exception(
                     "Unhandled error for [%s/%s] %s %s %s (%s, %s): %s",
@@ -796,22 +830,30 @@ def main() -> None:
                     contract["maturity"],
                     exc,
                 )
-                result = build_result(
-                    contract,
-                    trade_date_str,
-                    status="fetch_error",
-                    errorMessage=f"Unhandled worker error: {exc}",
-                )
+                contract_rows = [
+                    build_error_row(
+                        contract=contract,
+                        start_date_str=start_date_str,
+                        end_date_str=end_date_str,
+                        status="fetch_error",
+                        error_message=f"Unhandled worker error: {exc}",
+                    )
+                ]
 
-            results.append(result)
+            results.extend(contract_rows)
+
+            ok_rows = sum(1 for row in contract_rows if row["status"] == "ok")
+            contract_status = "ok" if ok_rows > 0 and len(contract_rows) == ok_rows else contract_rows[0]["status"]
+
             logger.info(
-                "[done %s/%s] %s %s %s -> %s",
+                "[done %s/%s] %s %s %s -> %s (%s row(s))",
                 index,
                 len(contracts),
                 contract["area"],
                 contract["maturityType"],
                 contract["delivery"],
-                result["status"],
+                contract_status,
+                len(contract_rows),
             )
 
     duration_seconds = round(time.time() - start_ts, 2)
@@ -821,6 +863,7 @@ def main() -> None:
             row["area"],
             SORT_ORDER[row["maturityType"]],
             row["maturity"],
+            row["tradeDate"] or "",
         )
     )
 
@@ -832,6 +875,7 @@ def main() -> None:
 
     summary = Counter(row["status"] for row in results)
     unique_areas = sorted({row["area"] for row in results})
+    total_ok_rows = sum(1 for row in results if row["status"] == "ok")
 
     logger.info("Status summary:")
     for status, count in sorted(summary.items()):
@@ -843,9 +887,11 @@ def main() -> None:
     else:
         logger.info("No failed rows. Failed CSV not created.")
 
-    contracts_per_minute = round((len(results) / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
-    avg_seconds_per_contract = round(duration_seconds / len(results), 2) if results else 0.0
+    contracts_per_minute = round((len(contracts) / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
+    avg_seconds_per_contract = round(duration_seconds / len(contracts), 2) if contracts else 0.0
 
+    logger.info("Total output rows: %s", len(results))
+    logger.info("Total ok rows: %s", total_ok_rows)
     logger.info("Duration seconds: %s", duration_seconds)
     logger.info("Throughput contracts/minute: %s", contracts_per_minute)
     logger.info("Average seconds/contract: %s", avg_seconds_per_contract)
@@ -860,11 +906,12 @@ def main() -> None:
         "maxRetries": args.max_retries,
         "retryDelaySeconds": args.retry_delay_seconds,
         "requestTimeoutSeconds": args.request_timeout_seconds,
-        "allowPreviousTradeDayFallback": not args.no_fallback,
         "requestedAreas": area_filter if area_filter is not None else "ALL",
         "areasInRun": unique_areas,
-        "totalContracts": len(results),
-        "failedContracts": len(failed_rows),
+        "totalContracts": len(contracts),
+        "totalOutputRows": len(results),
+        "totalOkRows": total_ok_rows,
+        "failedRows": len(failed_rows),
         "statusSummary": dict(summary),
         "durationSeconds": duration_seconds,
         "throughputContractsPerMinute": contracts_per_minute,
