@@ -39,23 +39,23 @@ REQUEST_HEADERS = {
 }
 
 POWER_AREAS = {
-    "FI":     {"codes": {"Month": "FNBM", "Quarter": "FNBQ", "Year": "FNBY"}, "assumed_types": []},
-    "SE1":    {"codes": {"Month": "1SBM", "Quarter": "1SBQ", "Year": "1SBY"}, "assumed_types": []},
-    "SE2":    {"codes": {"Month": "2SBM", "Quarter": "2SBQ", "Year": "2SBY"}, "assumed_types": []},
-    "SE3":    {"codes": {"Month": "3SBM", "Quarter": "3SBQ", "Year": "3SBY"}, "assumed_types": []},
-    "SE4":    {"codes": {"Month": "4SBM", "Quarter": "4SBQ", "Year": "4SBY"}, "assumed_types": []},
-    "DE":     {"codes": {"Month": "DEBM", "Quarter": "DEBQ", "Year": "DEBY"}, "assumed_types": []},
-    "GB":     {"codes": {"Month": "FUBM", "Quarter": "FUBQ", "Year": "FUBY"}, "assumed_types": []},
-    "ES":     {"codes": {"Month": "FEBM", "Quarter": "FEBQ", "Year": "FEBY"}, "assumed_types": []},
-    "IT":     {"codes": {"Month": "FDBM", "Quarter": "FDBQ", "Year": "FDBY"}, "assumed_types": []},
-    "NL":     {"codes": {"Month": "Q0BM", "Quarter": "Q0BQ", "Year": "Q0BY"}, "assumed_types": []},
+    "FI": {"codes": {"Month": "FNBM", "Quarter": "FNBQ", "Year": "FNBY"}, "assumed_types": []},
+    "SE1": {"codes": {"Month": "1SBM", "Quarter": "1SBQ", "Year": "1SBY"}, "assumed_types": []},
+    "SE2": {"codes": {"Month": "2SBM", "Quarter": "2SBQ", "Year": "2SBY"}, "assumed_types": []},
+    "SE3": {"codes": {"Month": "3SBM", "Quarter": "3SBQ", "Year": "3SBY"}, "assumed_types": []},
+    "SE4": {"codes": {"Month": "4SBM", "Quarter": "4SBQ", "Year": "4SBY"}, "assumed_types": []},
+    "DE": {"codes": {"Month": "DEBM", "Quarter": "DEBQ", "Year": "DEBY"}, "assumed_types": []},
+    "GB": {"codes": {"Month": "FUBM", "Quarter": "FUBQ", "Year": "FUBY"}, "assumed_types": []},
+    "ES": {"codes": {"Month": "FEBM", "Quarter": "FEBQ", "Year": "FEBY"}, "assumed_types": []},
+    "IT": {"codes": {"Month": "FDBM", "Quarter": "FDBQ", "Year": "FDBY"}, "assumed_types": []},
+    "NL": {"codes": {"Month": "Q0BM", "Quarter": "Q0BQ", "Year": "Q0BY"}, "assumed_types": []},
     "Nordic": {"codes": {"Month": "FBBM", "Quarter": "FBBQ", "Year": "FBBY"}, "assumed_types": []},
-    "FR":     {"codes": {"Month": "F7BM", "Quarter": "F7BQ", "Year": "F7BY"}, "assumed_types": []},
-    "NO1":    {"codes": {"Month": "1NBM", "Quarter": "1NBQ", "Year": "1NBY"}, "assumed_types": []},
-    "NO2":    {"codes": {"Month": "2NBM", "Quarter": "2NBQ", "Year": "2NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
-    "NO3":    {"codes": {"Month": "3NBM", "Quarter": "3NBQ", "Year": "3NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
-    "NO4":    {"codes": {"Month": "4NBM", "Quarter": "4NBQ", "Year": "4NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
-    "NO5":    {"codes": {"Month": "5NBM", "Quarter": "5NBQ", "Year": "5NBY"}, "assumed_types": ["Month", "Quarter"]},
+    "FR": {"codes": {"Month": "F7BM", "Quarter": "F7BQ", "Year": "F7BY"}, "assumed_types": []},
+    "NO1": {"codes": {"Month": "1NBM", "Quarter": "1NBQ", "Year": "1NBY"}, "assumed_types": []},
+    "NO2": {"codes": {"Month": "2NBM", "Quarter": "2NBQ", "Year": "2NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
+    "NO3": {"codes": {"Month": "3NBM", "Quarter": "3NBQ", "Year": "3NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
+    "NO4": {"codes": {"Month": "4NBM", "Quarter": "4NBQ", "Year": "4NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
+    "NO5": {"codes": {"Month": "5NBM", "Quarter": "5NBQ", "Year": "5NBY"}, "assumed_types": ["Month", "Quarter"]},
 }
 
 GAS_FUTURES_TTF = {
@@ -125,6 +125,18 @@ FIELDNAMES = [
     "assumedCode",
     "httpStatus",
     "errorMessage",
+]
+
+MASTER_KEY_FIELDS = [
+    "marketGroup",
+    "area",
+    "commodity",
+    "pricing",
+    "product",
+    "shortCode",
+    "maturityType",
+    "maturity",
+    "tradeDate",
 ]
 
 _thread_local = threading.local()
@@ -254,18 +266,9 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="selected = one requested date per contract; range = all dates in a given window; full-history = all dates from a configured lower bound to an end date.",
     )
-    parser.add_argument(
-        "--trade-date",
-        help="Requested trade date in YYYY-MM-DD for selected mode.",
-    )
-    parser.add_argument(
-        "--start-date",
-        help="Start date in YYYY-MM-DD for range mode.",
-    )
-    parser.add_argument(
-        "--end-date",
-        help="End date in YYYY-MM-DD for range or full-history mode.",
-    )
+    parser.add_argument("--trade-date", help="Requested trade date in YYYY-MM-DD for selected mode.")
+    parser.add_argument("--start-date", help="Start date in YYYY-MM-DD for range mode.")
+    parser.add_argument("--end-date", help="End date in YYYY-MM-DD for range or full-history mode.")
     parser.add_argument(
         "--contract-anchor-date",
         help="Date in YYYY-MM-DD used to build the contract set. Defaults to the selected/end date.",
@@ -275,21 +278,10 @@ def parse_args() -> argparse.Namespace:
         default=FULL_HISTORY_START_DATE,
         help=f"Lower bound for full-history mode. Default: {FULL_HISTORY_START_DATE}",
     )
-    parser.add_argument(
-        "--areas",
-        help="Comma-separated areas, e.g. DE,GB,FR. Default is all defined areas.",
-    )
-    parser.add_argument(
-        "--max-contracts",
-        type=int,
-        default=None,
-        help="Optional cap for testing.",
-    )
-    parser.add_argument(
-        "--output-dir",
-        default="Output",
-        help="Folder for output files. Default: Output",
-    )
+    parser.add_argument("--areas", help="Comma-separated areas, e.g. DE,GB,FR. Default is all defined areas.")
+    parser.add_argument("--max-contracts", type=int, default=None, help="Optional cap for testing.")
+    parser.add_argument("--output-dir", default="Output", help="Folder for output files. Default: Output")
+    parser.add_argument("--master-file", help="Optional path to a master CSV file to merge the current run into.")
     parser.add_argument(
         "--rerun-failed-from",
         help="Path to a previous main CSV or failed CSV. Re-runs only non-ok contracts.",
@@ -312,12 +304,7 @@ def parse_args() -> argparse.Namespace:
         default=3.0,
         help="Upper bound for adaptive pacing after 429s. Default: 3.0",
     )
-    parser.add_argument(
-        "--max-retries",
-        type=int,
-        default=2,
-        help="Retry count for request failures. Default: 2",
-    )
+    parser.add_argument("--max-retries", type=int, default=2, help="Retry count for request failures. Default: 2")
     parser.add_argument(
         "--retry-delay-seconds",
         type=float,
@@ -335,12 +322,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Selected mode only. Disable fallback to the latest available row before the requested trade date.",
     )
-    parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=1,
-        help="Number of parallel workers. Default: 1",
-    )
+    parser.add_argument("--max-workers", type=int, default=1, help="Number of parallel workers. Default: 1")
     parser.add_argument(
         "--cooldown-threshold",
         type=int,
@@ -893,6 +875,70 @@ def get_retry_wait_seconds(
     return wait_seconds
 
 
+def row_key(row: dict[str, Any]) -> tuple[Any, ...]:
+    return tuple(row.get(field) for field in MASTER_KEY_FIELDS)
+
+
+def row_quality_score(row: dict[str, Any]) -> tuple[int, int, str]:
+    populated = sum(
+        1
+        for field in ("settlementPrice", "volume", "grossOpenInterest")
+        if row.get(field) not in (None, "", "null")
+    )
+    status_rank = 1 if row.get("status") == "ok" else 0
+    http_rank = str(row.get("httpStatus") or "")
+    return (status_rank, populated, http_rank)
+
+
+def merge_into_master(master_file: Path, new_rows: list[dict[str, Any]]) -> tuple[int, int]:
+    merged: dict[tuple[Any, ...], dict[str, Any]] = {}
+    existing_count = 0
+
+    if master_file.exists():
+        with master_file.open("r", newline="", encoding="utf-8-sig") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                normalized = {field: row.get(field, "") for field in FIELDNAMES}
+                key = row_key(normalized)
+                merged[key] = normalized
+                existing_count += 1
+
+    added_or_updated = 0
+    for row in new_rows:
+        normalized = {field: row.get(field, "") if row.get(field) is not None else "" for field in FIELDNAMES}
+        key = row_key(normalized)
+        existing = merged.get(key)
+
+        if existing is None:
+            merged[key] = normalized
+            added_or_updated += 1
+            continue
+
+        if row_quality_score(normalized) >= row_quality_score(existing):
+            merged[key] = normalized
+            added_or_updated += 1
+
+    master_file.parent.mkdir(parents=True, exist_ok=True)
+
+    sorted_rows = sorted(
+        merged.values(),
+        key=lambda r: (
+            r.get("marketGroup", ""),
+            r.get("area", ""),
+            SORT_ORDER.get(r.get("maturityType"), 99),
+            r.get("maturity", "") or "",
+            r.get("tradeDate", "") or "",
+        ),
+    )
+
+    with master_file.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(sorted_rows)
+
+    return existing_count, len(sorted_rows)
+
+
 def fetch_contract_rows(
     logger: logging.Logger,
     rate_controller: AdaptiveRateController,
@@ -1149,6 +1195,12 @@ def main() -> None:
         output_dir = script_dir / output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    master_file_path = None
+    if args.master_file:
+        master_file_path = Path(args.master_file)
+        if not master_file_path.is_absolute():
+            master_file_path = script_dir / master_file_path
+
     rerun_contracts: list[dict[str, Any]] | None = None
     inferred = InferredRunConfig()
 
@@ -1217,6 +1269,8 @@ def main() -> None:
         args.cooldown_window_seconds,
         args.cooldown_seconds,
     )
+    if master_file_path is not None:
+        logger.info("Master merge target: %s", master_file_path)
 
     main_handle, main_writer = init_csv_writer(main_csv_path)
     failed_handle = None
@@ -1226,6 +1280,7 @@ def main() -> None:
     total_output_rows = 0
     total_ok_rows = 0
     unique_areas: set[str] = set()
+    all_rows_for_master: list[dict[str, Any]] = []
 
     start_ts = time.time()
     completed_contracts = 0
@@ -1290,6 +1345,7 @@ def main() -> None:
 
                 for row in contract_rows:
                     main_writer.writerow(row)
+                    all_rows_for_master.append(row)
                     total_output_rows += 1
                     unique_areas.add(row["area"])
                     summary[row["status"]] += 1
@@ -1324,6 +1380,11 @@ def main() -> None:
         if failed_handle is not None:
             failed_handle.close()
 
+    master_existing_rows = None
+    master_final_rows = None
+    if master_file_path is not None:
+        master_existing_rows, master_final_rows = merge_into_master(master_file_path, all_rows_for_master)
+
     duration_seconds = round(time.time() - start_ts, 2)
     contracts_per_minute = round((len(contracts) / duration_seconds) * 60, 2) if duration_seconds > 0 else 0.0
     avg_seconds_per_contract = round(duration_seconds / len(contracts), 2) if contracts else 0.0
@@ -1337,6 +1398,11 @@ def main() -> None:
         logger.info("Saved failed CSV: %s", failed_csv_path)
     else:
         logger.info("No failed rows. Failed CSV not created.")
+
+    if master_file_path is not None:
+        logger.info("Updated master CSV: %s", master_file_path)
+        logger.info("Master rows before merge: %s", master_existing_rows)
+        logger.info("Master rows after merge: %s", master_final_rows)
 
     logger.info("Total output rows: %s", total_output_rows)
     logger.info("Total ok rows: %s", total_ok_rows)
@@ -1379,6 +1445,12 @@ def main() -> None:
             "failedCsv": str(failed_csv_path) if failed_writer is not None else None,
             "summaryJson": str(summary_json_path),
             "logFile": str(log_path),
+            "masterCsv": str(master_file_path) if master_file_path is not None else None,
+        },
+        "masterMerge": {
+            "enabled": master_file_path is not None,
+            "rowsBefore": master_existing_rows,
+            "rowsAfter": master_final_rows,
         },
         "generatedAt": datetime.now().isoformat(timespec="seconds"),
     }
