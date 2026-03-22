@@ -34,3 +34,21 @@
 2026-03-22 15:57:21,590 | INFO | [done 225/371] FR Month Jul-26 -> ok (32 row(s))
 2026-03-22 15:57:46,662 | INFO | [done 250/371] NO1 Quarter Q4-26 -> ok (32 row(s))
 2026-03-22 15:58:11,557 | INFO | [done 275/371] NO2 Year Cal-27 -> ok (32 row(s))
+2026-03-22 15:58:36,687 | INFO | [done 300/371] NO3 Year Cal-32 -> ok (32 row(s))
+2026-03-22 15:59:01,682 | INFO | [done 325/371] NO5 Month Jul-26 -> ok (32 row(s))
+2026-03-22 15:59:26,664 | INFO | [done 350/371] TTF Quarter Gas Q4-26 -> ok (32 row(s))
+2026-03-22 15:59:47,695 | INFO | [done 371/371] EU Year GO Wind Cal-30 -> ok (32 row(s))
+2026-03-22 15:59:47,865 | INFO | Status summary:
+2026-03-22 15:59:47,865 | INFO |   ok: 11884
+2026-03-22 15:59:47,865 | INFO | Saved main CSV: /workspaces/scrape/Output/CSV_[22-03-26_1553].csv
+2026-03-22 15:59:47,865 | INFO | No failed rows. Failed CSV not created.
+2026-03-22 15:59:47,866 | INFO | Updated master CSV: /workspaces/scrape/master/eex_master.csv
+2026-03-22 15:59:47,866 | INFO | Master rows before merge: 100
+2026-03-22 15:59:47,866 | INFO | Master rows after merge: 11884
+2026-03-22 15:59:47,866 | INFO | Total output rows: 11884
+2026-03-22 15:59:47,867 | INFO | Total ok rows: 11884
+2026-03-22 15:59:47,867 | INFO | Duration seconds: 371.25
+2026-03-22 15:59:47,867 | INFO | Throughput contracts/minute: 59.96
+2026-03-22 15:59:47,867 | INFO | Average seconds/contract: 1.0
+2026-03-22 15:59:47,868 | INFO | Final adaptive request gap: 1.00s
+2026-03-22 15:59:47,868 | INFO | Saved summary JSON: /workspaces/scrape/Output/JSON_[22-03-26_1553].json
