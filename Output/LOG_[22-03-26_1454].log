@@ -1,0 +1,23 @@
+2026-03-22 14:54:47,057 | INFO | Run mode: full
+2026-03-22 14:54:47,058 | INFO | Scrape mode: selected
+2026-03-22 14:54:47,058 | INFO | Built 5 contracts.
+2026-03-22 14:54:47,059 | INFO | Contract anchor date: 2026-03-20
+2026-03-22 14:54:47,060 | INFO | Window: 2026-03-13 -> 2026-03-20
+2026-03-22 14:54:47,060 | INFO | Requested trade date: 2026-03-20
+2026-03-22 14:54:47,061 | INFO | Adaptive pacing: base 1.00s, max 3.00s, workers 1.
+2026-03-22 14:54:47,061 | INFO | 429 cooldown rule: 3 hit(s) within 15.0s triggers a 30.0s global pause.
+2026-03-22 14:54:47,061 | INFO | [queued 1/5] FI Month Mar-26 (FNBM, 202603)
+2026-03-22 14:54:47,064 | INFO | [queued 5/5] FI Month Jul-26 (FNBM, 202607)
+2026-03-22 14:54:48,309 | INFO | [done 1/5] FI Month Mar-26 -> ok (1 row(s))
+2026-03-22 14:54:51,989 | INFO | [done 5/5] FI Month Jul-26 -> ok (1 row(s))
+2026-03-22 14:54:51,990 | INFO | Status summary:
+2026-03-22 14:54:51,990 | INFO |   ok: 5
+2026-03-22 14:54:51,990 | INFO | Saved main CSV: /workspaces/scrape/Output/CSV_[22-03-26_1454].csv
+2026-03-22 14:54:51,990 | INFO | No failed rows. Failed CSV not created.
+2026-03-22 14:54:51,991 | INFO | Total output rows: 5
+2026-03-22 14:54:51,991 | INFO | Total ok rows: 5
+2026-03-22 14:54:51,991 | INFO | Duration seconds: 4.93
+2026-03-22 14:54:51,991 | INFO | Throughput contracts/minute: 60.85
+2026-03-22 14:54:51,991 | INFO | Average seconds/contract: 0.99
+2026-03-22 14:54:51,991 | INFO | Final adaptive request gap: 1.00s
+2026-03-22 14:54:51,991 | INFO | Saved summary JSON: /workspaces/scrape/Output/JSON_[22-03-26_1454].json

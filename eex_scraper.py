@@ -39,7 +39,26 @@ REQUEST_HEADERS = {
 }
 
 POWER_AREAS = {
-    GAS_FUTURES_TTF = {
+    "FI":     {"codes": {"Month": "FNBM", "Quarter": "FNBQ", "Year": "FNBY"}, "assumed_types": []},
+    "SE1":    {"codes": {"Month": "1SBM", "Quarter": "1SBQ", "Year": "1SBY"}, "assumed_types": []},
+    "SE2":    {"codes": {"Month": "2SBM", "Quarter": "2SBQ", "Year": "2SBY"}, "assumed_types": []},
+    "SE3":    {"codes": {"Month": "3SBM", "Quarter": "3SBQ", "Year": "3SBY"}, "assumed_types": []},
+    "SE4":    {"codes": {"Month": "4SBM", "Quarter": "4SBQ", "Year": "4SBY"}, "assumed_types": []},
+    "DE":     {"codes": {"Month": "DEBM", "Quarter": "DEBQ", "Year": "DEBY"}, "assumed_types": []},
+    "GB":     {"codes": {"Month": "FUBM", "Quarter": "FUBQ", "Year": "FUBY"}, "assumed_types": []},
+    "ES":     {"codes": {"Month": "FEBM", "Quarter": "FEBQ", "Year": "FEBY"}, "assumed_types": []},
+    "IT":     {"codes": {"Month": "FDBM", "Quarter": "FDBQ", "Year": "FDBY"}, "assumed_types": []},
+    "NL":     {"codes": {"Month": "Q0BM", "Quarter": "Q0BQ", "Year": "Q0BY"}, "assumed_types": []},
+    "Nordic": {"codes": {"Month": "FBBM", "Quarter": "FBBQ", "Year": "FBBY"}, "assumed_types": []},
+    "FR":     {"codes": {"Month": "F7BM", "Quarter": "F7BQ", "Year": "F7BY"}, "assumed_types": []},
+    "NO1":    {"codes": {"Month": "1NBM", "Quarter": "1NBQ", "Year": "1NBY"}, "assumed_types": []},
+    "NO2":    {"codes": {"Month": "2NBM", "Quarter": "2NBQ", "Year": "2NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
+    "NO3":    {"codes": {"Month": "3NBM", "Quarter": "3NBQ", "Year": "3NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
+    "NO4":    {"codes": {"Month": "4NBM", "Quarter": "4NBQ", "Year": "4NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
+    "NO5":    {"codes": {"Month": "5NBM", "Quarter": "5NBQ", "Year": "5NBY"}, "assumed_types": ["Month", "Quarter"]},
+}
+
+GAS_FUTURES_TTF = {
     "TTF": {
         "commodity": "NATGAS",
         "pricing": "F",
@@ -75,35 +94,22 @@ GOO_FUTURES_CONFIG = {
         "pricing": "F",
         "product": "Wind",
         "shortCode": "EGOW",
-        "maturityType": "Month",
+        "maturityType": "Year",
         "assumedCode": False,
     }
 }
-    "FI":     {"codes": {"Month": "FNBM", "Quarter": "FNBQ", "Year": "FNBY"}, "assumed_types": []},
-    "SE1":    {"codes": {"Month": "1SBM", "Quarter": "1SBQ", "Year": "1SBY"}, "assumed_types": []},
-    "SE2":    {"codes": {"Month": "2SBM", "Quarter": "2SBQ", "Year": "2SBY"}, "assumed_types": []},
-    "SE3":    {"codes": {"Month": "3SBM", "Quarter": "3SBQ", "Year": "3SBY"}, "assumed_types": []},
-    "SE4":    {"codes": {"Month": "4SBM", "Quarter": "4SBQ", "Year": "4SBY"}, "assumed_types": []},
-    "DE":     {"codes": {"Month": "DEBM", "Quarter": "DEBQ", "Year": "DEBY"}, "assumed_types": []},
-    "GB":     {"codes": {"Month": "FUBM", "Quarter": "FUBQ", "Year": "FUBY"}, "assumed_types": []},
-    "ES":     {"codes": {"Month": "FEBM", "Quarter": "FEBQ", "Year": "FEBY"}, "assumed_types": []},
-    "IT":     {"codes": {"Month": "FDBM", "Quarter": "FDBQ", "Year": "FDBY"}, "assumed_types": []},
-    "NL":     {"codes": {"Month": "Q0BM", "Quarter": "Q0BQ", "Year": "Q0BY"}, "assumed_types": []},
-    "Nordic": {"codes": {"Month": "FBBM", "Quarter": "FBBQ", "Year": "FBBY"}, "assumed_types": []},
-    "FR":     {"codes": {"Month": "F7BM", "Quarter": "F7BQ", "Year": "F7BY"}, "assumed_types": []},
-    "NO1":    {"codes": {"Month": "1NBM", "Quarter": "1NBQ", "Year": "1NBY"}, "assumed_types": []},
-    "NO2":    {"codes": {"Month": "2NBM", "Quarter": "2NBQ", "Year": "2NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
-    "NO3":    {"codes": {"Month": "3NBM", "Quarter": "3NBQ", "Year": "3NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
-    "NO4":    {"codes": {"Month": "4NBM", "Quarter": "4NBQ", "Year": "4NBY"}, "assumed_types": ["Month", "Quarter", "Year"]},
-    "NO5":    {"codes": {"Month": "5NBM", "Quarter": "5NBQ", "Year": "5NBY"}, "assumed_types": ["Month", "Quarter"]},
-}
 
 MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-SORT_ORDER = {"Month": 1, "Quarter": 2, "Year": 3}
+SORT_ORDER = {"Month": 1, "Quarter": 2, "Season": 3, "Year": 4, None: 5}
+
 FIELDNAMES = [
     "mode",
     "contractAnchorDate",
+    "marketGroup",
     "area",
+    "commodity",
+    "pricing",
+    "product",
     "maturityType",
     "delivery",
     "requestedTradeDate",
@@ -438,16 +444,18 @@ def parse_area_filter(raw: str | None) -> list[str] | None:
 
 
 def build_contracts(
-    an[str] | None,
+    anchor_date: date,
+    area_filter: list[str] | None,
     max_contracts: int | None,
 ) -> list[dict[str, Any]]:
     contracts: list[dict[str, Any]] = []
 
-     = anchor_date.year = anchor_date.month
+    target_year = anchor_date.year
+    target_month = anchor_date.month
     current_quarter_start_month = ((target_month - 1) // 3) * 3 + 1
 
-    for area, area_cfg in AREAS.items():
-        if arealter and area not in area_filter:
+    for area, area_cfg in POWER_AREAS.items():
+        if area_filter and area not in area_filter:
             continue
 
         codes = area_cfg["codes"]
@@ -457,26 +465,181 @@ def build_contracts(
             for i in range(7):
                 year, month = add_months(target_year, target_month, i)
                 contracts.append({
+                    "marketGroup": "POWER",
                     "area": area,
+                    "commodity": "POWER",
+                    "pricing": "F",
+                    "product": "Base",
                     "shortCode": codes["Month"],
                     "maturityType": "Month",
-                    "maturity": fmt_maturity(, month),
-                    "delivery": f"{[mont - 1]}-{str(year)[-2:]}",
-                    "assum
+                    "maturity": fmt_maturity(year, month),
+                    "delivery": f"{MONTH_NAMES[month - 1]}-{str(year)[-2:]}",
+                    "assumedCode": "Month" in assumed_types,
+                })
+
+        if codes.get("Quarter"):
+            for i in range(1, 8):
+                year, month = add_months(target_year, current_quarter_start_month, i * 3)
+                quarter = ((month - 1) // 3) + 1
+                contracts.append({
+                    "marketGroup": "POWER",
+                    "area": area,
+                    "commodity": "POWER",
+                    "pricing": "F",
+                    "product": "Base",
+                    "shortCode": codes["Quarter"],
+                    "maturityType": "Quarter",
+                    "maturity": fmt_maturity(year, month),
+                    "delivery": f"Q{quarter}-{str(year)[-2:]}",
+                    "assumedCode": "Quarter" in assumed_types,
+                })
+
+        if codes.get("Year"):
+            for i in range(1, 7):
+                year = target_year + i
+                contracts.append({
+                    "marketGroup": "POWER",
+                    "area": area,
+                    "commodity": "POWER",
+                    "pricing": "F",
+                    "product": "Base",
+                    "shortCode": codes["Year"],
+                    "maturityType": "Year",
+                    "maturity": f"{year}01",
+                    "delivery": f"Cal-{str(year)[-2:]}",
+                    "assumedCode": "Year" in assumed_types,
+                })
+
+    for area, area_cfg in GAS_FUTURES_TTF.items():
+        if area_filter and area not in area_filter:
+            continue
+
+        codes = area_cfg["codes"]
+        assumed_types = set(area_cfg["assumed_types"])
+
+        if codes.get("Month"):
+            for i in range(7):
+                year, month = add_months(target_year, target_month, i)
+                contracts.append({
+                    "marketGroup": "GAS_FUTURES",
+                    "area": area,
+                    "commodity": area_cfg["commodity"],
+                    "pricing": area_cfg["pricing"],
+                    "product": area_cfg["product"],
+                    "shortCode": codes["Month"],
+                    "maturityType": "Month",
+                    "maturity": fmt_maturity(year, month),
+                    "delivery": f"Gas Month {MONTH_NAMES[month - 1]}-{str(year)[-2:]}",
+                    "assumedCode": "Month" in assumed_types,
+                })
+
+        if codes.get("Quarter"):
+            for i in range(1, 8):
+                year, month = add_months(target_year, current_quarter_start_month, i * 3)
+                quarter = ((month - 1) // 3) + 1
+                contracts.append({
+                    "marketGroup": "GAS_FUTURES",
+                    "area": area,
+                    "commodity": area_cfg["commodity"],
+                    "pricing": area_cfg["pricing"],
+                    "product": area_cfg["product"],
+                    "shortCode": codes["Quarter"],
+                    "maturityType": "Quarter",
+                    "maturity": fmt_maturity(year, month),
+                    "delivery": f"Gas Q{quarter}-{str(year)[-2:]}",
+                    "assumedCode": "Quarter" in assumed_types,
+                })
+
+        if codes.get("Season"):
+            season_start_year = target_year if target_month < 10 else target_year + 1
+            for i in range(6):
+                year = season_start_year + i
+                contracts.append({
+                    "marketGroup": "GAS_FUTURES",
+                    "area": area,
+                    "commodity": area_cfg["commodity"],
+                    "pricing": area_cfg["pricing"],
+                    "product": area_cfg["product"],
+                    "shortCode": codes["Season"],
+                    "maturityType": "Season",
+                    "maturity": f"{year}10",
+                    "delivery": f"Gas Winter-{str(year)[-2:]}",
+                    "assumedCode": "Season" in assumed_types,
+                })
+
+        if codes.get("Year"):
+            for i in range(1, 7):
+                year = target_year + i
+                contracts.append({
+                    "marketGroup": "GAS_FUTURES",
+                    "area": area,
+                    "commodity": area_cfg["commodity"],
+                    "pricing": area_cfg["pricing"],
+                    "product": area_cfg["product"],
+                    "shortCode": codes["Year"],
+                    "maturityType": "Year",
+                    "maturity": f"{year}01",
+                    "delivery": f"Gas Cal-{str(year)[-2:]}",
+                    "assumedCode": "Year" in assumed_types,
+                })
+
+    for _, cfg in GAS_SPOT_CONFIG.items():
+        if area_filter and cfg["area"] not in area_filter:
+            continue
+
+        contracts.append({
+            "marketGroup": "GAS_SPOT",
+            "area": cfg["area"],
+            "commodity": cfg["commodity"],
+            "pricing": cfg["pricing"],
+            "product": cfg["product"],
+            "shortCode": cfg["shortCode"],
+            "maturityType": cfg["maturityType"],
+            "maturity": cfg["maturity"],
+            "delivery": cfg["delivery"],
+            "assumedCode": cfg["assumedCode"],
+        })
+
+    for _, cfg in GOO_FUTURES_CONFIG.items():
+        if area_filter and cfg["area"] not in area_filter:
+            continue
+
+        for i in range(1, 5):
+            year = target_year + i
+            contracts.append({
+                "marketGroup": "GO_FUTURES",
+                "area": cfg["area"],
+                "commodity": cfg["commodity"],
+                "pricing": cfg["pricing"],
+                "product": cfg["product"],
+                "shortCode": cfg["shortCode"],
+                "maturityType": cfg["maturityType"],
+                "maturity": f"{year}01",
+                "delivery": f"GO Wind Cal-{str(year)[-2:]}",
+                "assumedCode": cfg["assumedCode"],
+            })
+
+    if max_contracts is not None:
+        contracts = contracts[:max_contracts]
+
+    return contracts
 
 
 def build_request_params(contract: dict[str, Any], start_date_str: str, end_date_str: str) -> dict[str, str]:
+    maturity = contract["maturity"] if contract["maturity"] is not None else "null"
+    maturity_type = contract["maturityType"] if contract["maturityType"] is not None else "null"
+
     return {
         "shortCode": contract["shortCode"],
-        "commodity": "POWER",
-        "pricing": "F",
+        "commodity": contract["commodity"],
+        "pricing": contract["pricing"],
         "area": contract["area"],
-        "product": "Base",
-        "maturity": contract["maturity"],
+        "product": contract["product"],
+        "maturity": maturity,
         "startDate": start_date_str,
-        ": end_date_str,
-        "maturityType": contract["maturityType"],
-        "": "true",
+        "endDate": end_date_str,
+        "maturityType": maturity_type,
+        "isRolling": "true",
     }
 
 
@@ -531,7 +694,11 @@ def build_error_row(
     return {
         "mode": mode,
         "contractAnchorDate": contract_anchor_date,
+        "marketGroup": contract["marketGroup"],
         "area": contract["area"],
+        "commodity": contract["commodity"],
+        "pricing": contract["pricing"],
+        "product": contract["product"],
         "maturityType": contract["maturityType"],
         "delivery": contract["delivery"],
         "requestedTradeDate": requested_trade_date,
@@ -564,7 +731,11 @@ def build_data_row(
     return {
         "mode": mode,
         "contractAnchorDate": contract_anchor_date,
+        "marketGroup": contract["marketGroup"],
         "area": contract["area"],
+        "commodity": contract["commodity"],
+        "pricing": contract["pricing"],
+        "product": contract["product"],
         "maturityType": contract["maturityType"],
         "delivery": contract["delivery"],
         "requestedTradeDate": requested_trade_date,
@@ -584,14 +755,14 @@ def build_data_row(
 
 
 def dedupe_contracts(contracts: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    seen: set[tuple[str, str, str, str]] = set()
+    seen: set[tuple[str, str, str, Any]] = set()
     unique_contracts: list[dict[str, Any]] = []
 
     for contract in contracts:
         key = (
             contract["area"],
             contract["shortCode"],
-            contract["maturityType"],
+            str(contract["maturityType"]),
             contract["maturity"],
         )
         if key in seen:
@@ -627,11 +798,18 @@ def load_contracts_from_previous_csv(csv_path: Path) -> tuple[list[dict[str, Any
         if inferred.window_end_date is None:
             inferred.window_end_date = (row.get("windowEndDate") or "").strip() or None
 
+        maturity_type_raw = row.get("maturityType")
+        maturity_raw = row.get("maturity")
+
         contracts.append({
+            "marketGroup": row.get("marketGroup") or "UNKNOWN",
             "area": row["area"],
+            "commodity": row.get("commodity"),
+            "pricing": row.get("pricing"),
+            "product": row.get("product"),
             "shortCode": row["shortCode"],
-            "maturityType": row["maturityType"],
-            "maturity": row["maturity"],
+            "maturityType": None if maturity_type_raw in ("", "None", None, "null") else maturity_type_raw,
+            "maturity": None if maturity_raw in ("", "None", None, "null") else maturity_raw,
             "delivery": row["delivery"],
             "assumedCode": parse_bool(row.get("assumedCode")),
         })
@@ -717,7 +895,6 @@ def get_retry_wait_seconds(
 
 def fetch_contract_rows(
     logger: logging.Logger,
-    session: requests.Session,
     rate_controller: AdaptiveRateController,
     contract: dict[str, Any],
     run_cfg: ResolvedRunConfig,
@@ -725,6 +902,7 @@ def fetch_contract_rows(
     retry_delay_seconds: float,
     request_timeout_seconds: float,
 ) -> list[dict[str, Any]]:
+    session = get_thread_session()
     params = build_request_params(contract, run_cfg.window_start_date, run_cfg.window_end_date)
     last_http_status: int | None = None
 
@@ -743,7 +921,7 @@ def fetch_contract_rows(
                 logger.warning(
                     "Request error for %s %s %s: %s. Retrying in %.1fs.",
                     contract["area"],
-                    contract["maturityType"],
+                    str(contract["maturityType"]),
                     contract["delivery"],
                     exc,
                     wait_seconds,
@@ -771,7 +949,7 @@ def fetch_contract_rows(
             logger.warning(
                 "HTTP 429 for %s %s %s. Adaptive gap %.2fs -> %.2fs.",
                 contract["area"],
-                contract["maturityType"],
+                str(contract["maturityType"]),
                 contract["delivery"],
                 old_gap,
                 new_gap,
@@ -787,7 +965,7 @@ def fetch_contract_rows(
             logger.warning(
                 "Retryable HTTP status for %s %s %s: %s. Retrying in %.1fs.",
                 contract["area"],
-                contract["maturityType"],
+                str(contract["maturityType"]),
                 contract["delivery"],
                 response.status_code,
                 wait_seconds,
@@ -1062,7 +1240,7 @@ def main() -> None:
                         index,
                         len(contracts),
                         contract["area"],
-                        contract["maturityType"],
+                        str(contract["maturityType"]),
                         contract["delivery"],
                         contract["shortCode"],
                         contract["maturity"],
@@ -1071,7 +1249,6 @@ def main() -> None:
                 future = executor.submit(
                     fetch_contract_rows,
                     logger,
-                    get_thread_session(),
                     rate_controller,
                     contract,
                     run_cfg,
@@ -1092,7 +1269,7 @@ def main() -> None:
                         index,
                         len(contracts),
                         contract["area"],
-                        contract["maturityType"],
+                        str(contract["maturityType"]),
                         contract["delivery"],
                         contract["shortCode"],
                         contract["maturity"],
@@ -1137,7 +1314,7 @@ def main() -> None:
                         completed_contracts,
                         len(contracts),
                         contract["area"],
-                        contract["maturityType"],
+                        str(contract["maturityType"]),
                         contract["delivery"],
                         contract_status,
                         len(contract_rows),

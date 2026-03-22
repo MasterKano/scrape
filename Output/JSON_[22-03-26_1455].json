@@ -1,0 +1,43 @@
+{
+  "runMode": "full",
+  "scrapeMode": "range",
+  "contractAnchorDate": "2026-03-22",
+  "requestedTradeDate": null,
+  "startDate": "2026-03-16",
+  "endDate": "2026-03-22",
+  "requestGapSeconds": 1.0,
+  "maxRequestGapSeconds": 3.0,
+  "maxRetries": 2,
+  "retryDelaySeconds": 5.0,
+  "requestTimeoutSeconds": 20.0,
+  "allowPreviousTradeDayFallback": false,
+  "requestedAreas": [
+    "TTF"
+  ],
+  "areasInRun": [
+    "TTF"
+  ],
+  "totalContracts": 5,
+  "totalOutputRows": 25,
+  "totalOkRows": 25,
+  "failedRows": 0,
+  "statusSummary": {
+    "ok": 25
+  },
+  "durationSeconds": 4.88,
+  "throughputContractsPerMinute": 61.48,
+  "averageSecondsPerContract": 0.98,
+  "cooldownThreshold": 3,
+  "cooldownWindowSeconds": 15.0,
+  "cooldownSeconds": 30.0,
+  "relaxAfterSeconds": 60.0,
+  "relaxFactor": 0.9,
+  "finalAdaptiveRequestGapSeconds": 1.0,
+  "files": {
+    "mainCsv": "/workspaces/scrape/Output/CSV_[22-03-26_1455].csv",
+    "failedCsv": null,
+    "summaryJson": "/workspaces/scrape/Output/JSON_[22-03-26_1455].json",
+    "logFile": "/workspaces/scrape/Output/LOG_[22-03-26_1455].log"
+  },
+  "generatedAt": "2026-03-22T14:55:19"
+}

@@ -1,0 +1,24 @@
+2026-03-22 14:56:50,941 | INFO | Run mode: full
+2026-03-22 14:56:50,941 | INFO | Scrape mode: range
+2026-03-22 14:56:50,941 | INFO | Built 27 contracts.
+2026-03-22 14:56:50,942 | INFO | Contract anchor date: 2026-03-22
+2026-03-22 14:56:50,942 | INFO | Window: 2026-03-16 -> 2026-03-22
+2026-03-22 14:56:50,942 | INFO | Adaptive pacing: base 1.00s, max 3.00s, workers 1.
+2026-03-22 14:56:50,942 | INFO | 429 cooldown rule: 3 hit(s) within 15.0s triggers a 30.0s global pause.
+2026-03-22 14:56:50,943 | INFO | [queued 1/27] TTF Month Gas Month Mar-26 (G3BM, 202603)
+2026-03-22 14:56:50,944 | INFO | [queued 25/27] TTF Year Gas Cal-31 (G3BY, 203101)
+2026-03-22 14:56:50,944 | INFO | [queued 27/27] TTF None TTF Day-Ahead (TTFDA, None)
+2026-03-22 14:56:51,123 | INFO | [done 1/27] TTF Month Gas Month Mar-26 -> ok (5 row(s))
+2026-03-22 14:57:15,693 | INFO | [done 25/27] TTF Year Gas Cal-31 -> ok (5 row(s))
+2026-03-22 14:57:16,972 | INFO | [done 27/27] TTF None TTF Day-Ahead -> ok (6 row(s))
+2026-03-22 14:57:16,973 | INFO | Status summary:
+2026-03-22 14:57:16,974 | INFO |   ok: 136
+2026-03-22 14:57:16,974 | INFO | Saved main CSV: /workspaces/scrape/Output/CSV_[22-03-26_1456].csv
+2026-03-22 14:57:16,974 | INFO | No failed rows. Failed CSV not created.
+2026-03-22 14:57:16,974 | INFO | Total output rows: 136
+2026-03-22 14:57:16,974 | INFO | Total ok rows: 136
+2026-03-22 14:57:16,974 | INFO | Duration seconds: 26.03
+2026-03-22 14:57:16,975 | INFO | Throughput contracts/minute: 62.24
+2026-03-22 14:57:16,975 | INFO | Average seconds/contract: 0.96
+2026-03-22 14:57:16,975 | INFO | Final adaptive request gap: 1.00s
+2026-03-22 14:57:16,975 | INFO | Saved summary JSON: /workspaces/scrape/Output/JSON_[22-03-26_1456].json

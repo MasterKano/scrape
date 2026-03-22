@@ -1,0 +1,6 @@
+mode,contractAnchorDate,marketGroup,area,commodity,pricing,product,maturityType,delivery,requestedTradeDate,windowStartDate,windowEndDate,tradeDate,status,settlementPrice,volume,grossOpenInterest,shortCode,maturity,assumedCode,httpStatus,errorMessage
+selected,2026-03-20,POWER,FI,POWER,F,Base,Month,Mar-26,2026-03-20,2026-03-13,2026-03-20,2026-03-20,ok,42.57,,73,FNBM,202603,False,200,
+selected,2026-03-20,POWER,FI,POWER,F,Base,Month,Apr-26,2026-03-20,2026-03-13,2026-03-20,2026-03-20,ok,55.91,,0,FNBM,202604,False,200,
+selected,2026-03-20,POWER,FI,POWER,F,Base,Month,May-26,2026-03-20,2026-03-13,2026-03-20,2026-03-20,ok,43.34,,2,FNBM,202605,False,200,
+selected,2026-03-20,POWER,FI,POWER,F,Base,Month,Jun-26,2026-03-20,2026-03-13,2026-03-20,2026-03-20,ok,32.68,,1,FNBM,202606,False,200,
+selected,2026-03-20,POWER,FI,POWER,F,Base,Month,Jul-26,2026-03-20,2026-03-13,2026-03-20,2026-03-20,ok,35.56,,0,FNBM,202607,False,200,

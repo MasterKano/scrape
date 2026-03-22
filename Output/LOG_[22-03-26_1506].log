@@ -1,0 +1,30 @@
+2026-03-22 15:06:25,505 | INFO | Run mode: full
+2026-03-22 15:06:25,506 | INFO | Scrape mode: range
+2026-03-22 15:06:25,506 | INFO | Built 371 contracts.
+2026-03-22 15:06:25,506 | INFO | Contract anchor date: 2026-03-20
+2026-03-22 15:06:25,506 | INFO | Window: 2026-03-16 -> 2026-03-20
+2026-03-22 15:06:25,506 | INFO | Adaptive pacing: base 1.00s, max 3.00s, workers 1.
+2026-03-22 15:06:25,506 | INFO | 429 cooldown rule: 3 hit(s) within 15.0s triggers a 30.0s global pause.
+2026-03-22 15:06:25,506 | INFO | [queued 1/371] FI Month Mar-26 (FNBM, 202603)
+2026-03-22 15:06:25,507 | INFO | [queued 25/371] SE1 Month Jul-26 (1SBM, 202607)
+2026-03-22 15:06:25,508 | INFO | [queued 50/371] SE2 Quarter Q4-26 (2SBQ, 202610)
+2026-03-22 15:06:25,508 | INFO | [queued 75/371] SE3 Year Cal-27 (3SBY, 202701)
+2026-03-22 15:06:25,508 | INFO | [queued 100/371] SE4 Year Cal-32 (4SBY, 203201)
+2026-03-22 15:06:25,511 | INFO | [queued 125/371] GB Month Jul-26 (FUBM, 202607)
+2026-03-22 15:06:25,511 | INFO | [queued 150/371] ES Quarter Q4-26 (FEBQ, 202610)
+2026-03-22 15:06:25,512 | INFO | [queued 175/371] IT Year Cal-27 (FDBY, 202701)
+2026-03-22 15:06:25,512 | INFO | [queued 200/371] NL Year Cal-32 (Q0BY, 203201)
+2026-03-22 15:06:25,512 | INFO | [queued 225/371] FR Month Jul-26 (F7BM, 202607)
+2026-03-22 15:06:25,513 | INFO | [queued 250/371] NO1 Quarter Q4-26 (1NBQ, 202610)
+2026-03-22 15:06:25,514 | INFO | [queued 275/371] NO2 Year Cal-27 (2NBY, 202701)
+2026-03-22 15:06:25,515 | INFO | [queued 300/371] NO3 Year Cal-32 (3NBY, 203201)
+2026-03-22 15:06:25,515 | INFO | [queued 325/371] NO5 Month Jul-26 (5NBM, 202607)
+2026-03-22 15:06:25,516 | INFO | [queued 350/371] TTF Quarter Gas Q4-26 (G3BQ, 202610)
+2026-03-22 15:06:25,517 | INFO | [queued 371/371] EU Year GO Wind Cal-30 (EGOW, 203001)
+2026-03-22 15:06:26,469 | INFO | [done 1/371] FI Month Mar-26 -> ok (5 row(s))
+2026-03-22 15:06:50,264 | INFO | [done 25/371] SE1 Month Jul-26 -> ok (5 row(s))
+2026-03-22 15:07:15,303 | INFO | [done 50/371] SE2 Quarter Q4-26 -> ok (5 row(s))
+2026-03-22 15:07:40,383 | INFO | [done 75/371] SE3 Year Cal-27 -> ok (5 row(s))
+2026-03-22 15:08:05,280 | INFO | [done 100/371] SE4 Year Cal-32 -> ok (5 row(s))
+2026-03-22 15:08:30,392 | INFO | [done 125/371] GB Month Jul-26 -> ok (5 row(s))
+2026-03-22 15:08:54,741 | INFO | [done 150/371] ES Quarter Q4-26 -> ok (5 row(s))
