@@ -1,0 +1,32 @@
+2026-03-24 22:19:12,956 | INFO | Run mode: full
+2026-03-24 22:19:12,957 | INFO | Scrape mode: range
+2026-03-24 22:19:12,957 | INFO | Built 88 contracts.
+2026-03-24 22:19:12,957 | INFO | Contract anchor date: 2026-03-20
+2026-03-24 22:19:12,957 | INFO | Window: 2026-03-16 -> 2026-03-20
+2026-03-24 22:19:12,957 | INFO | Adaptive pacing: base 1.00s, max 3.00s, workers 1.
+2026-03-24 22:19:12,957 | INFO | 429 cooldown rule: 3 hit(s) within 15.0s triggers a 30.0s global pause.
+2026-03-24 22:19:12,957 | INFO | Master merge target: /workspaces/scrape/master/eex_master.csv
+2026-03-24 22:19:12,957 | INFO | [queued 1/88] EU Year GO Wind Cal-27 (EGOW, 202701)
+2026-03-24 22:19:12,958 | INFO | [queued 25/88] EU Month EUA Nov-27 (FEUA, 202711)
+2026-03-24 22:19:12,958 | INFO | [queued 50/88] EU Month EUA Dec-29 (FEUA, 202912)
+2026-03-24 22:19:12,959 | INFO | [queued 75/88] EU Month EUA Jan-32 (FEUA, 203201)
+2026-03-24 22:19:12,959 | INFO | [queued 88/88] EU Month EUA Feb-33 (FEUA, 203302)
+2026-03-24 22:19:14,080 | INFO | [done 1/88] EU Year GO Wind Cal-27 -> ok (5 row(s))
+2026-03-24 22:19:38,556 | INFO | [done 25/88] EU Month EUA Nov-27 -> ok (5 row(s))
+2026-03-24 22:20:07,714 | INFO | [done 50/88] EU Month EUA Dec-29 -> ok (5 row(s))
+2026-03-24 22:20:38,991 | INFO | [done 75/88] EU Month EUA Jan-32 -> ok (5 row(s))
+2026-03-24 22:20:52,865 | INFO | [done 88/88] EU Month EUA Feb-33 -> ok (5 row(s))
+2026-03-24 22:20:53,228 | INFO | Status summary:
+2026-03-24 22:20:53,229 | INFO |   ok: 440
+2026-03-24 22:20:53,229 | INFO | Saved main CSV: /workspaces/scrape/Output/CSV_[24-03-26_2219].csv
+2026-03-24 22:20:53,229 | INFO | No failed rows. Failed CSV not created.
+2026-03-24 22:20:53,229 | INFO | Updated master CSV: /workspaces/scrape/master/eex_master.csv
+2026-03-24 22:20:53,229 | INFO | Master rows before merge: 11884
+2026-03-24 22:20:53,229 | INFO | Master rows after merge: 12304
+2026-03-24 22:20:53,229 | INFO | Total output rows: 440
+2026-03-24 22:20:53,229 | INFO | Total ok rows: 440
+2026-03-24 22:20:53,229 | INFO | Duration seconds: 100.27
+2026-03-24 22:20:53,229 | INFO | Throughput contracts/minute: 52.66
+2026-03-24 22:20:53,229 | INFO | Average seconds/contract: 1.14
+2026-03-24 22:20:53,230 | INFO | Final adaptive request gap: 1.00s
+2026-03-24 22:20:53,231 | INFO | Saved summary JSON: /workspaces/scrape/Output/JSON_[24-03-26_2219].json

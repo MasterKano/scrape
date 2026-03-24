@@ -99,20 +99,6 @@ GOO_FUTURES_CONFIG = {
     }
 }
 
-EUA_FUTURES_CONFIG = {
-    "EUA": {
-        "area": "EU",
-        "commodity": "ENVIRONMENTALS",
-        "pricing": "F",
-        "product": "EUA",
-        "shortCode": "FEUA",
-        "maturityType": "Month",
-        "assumedCode": False,
-    }
-}
-
-EUA_DISCOVERY_MONTHS = 84
-
 MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 SORT_ORDER = {"Month": 1, "Quarter": 2, "Season": 3, "Year": 4, None: 5}
 
@@ -272,17 +258,17 @@ def get_thread_session() -> requests.Session:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Unified EEX scraper: selected date, explicit range, full history, or auto-update from master."
+        description="Unified EEX scraper: selected date, explicit range, or full history."
     )
     parser.add_argument(
         "--mode",
-        choices=["selected", "range", "full-history", "auto-update"],
+        choices=["selected", "range", "full-history"],
         default=None,
-        help="selected = one requested date per contract; range = all dates in a given window; full-history = all dates from a configured lower bound to an end date; auto-update = derive start date from master file overlap.",
+        help="selected = one requested date per contract; range = all dates in a given window; full-history = all dates from a configured lower bound to an end date.",
     )
     parser.add_argument("--trade-date", help="Requested trade date in YYYY-MM-DD for selected mode.")
     parser.add_argument("--start-date", help="Start date in YYYY-MM-DD for range mode.")
-    parser.add_argument("--end-date", help="End date in YYYY-MM-DD for range, full-history, or auto-update mode.")
+    parser.add_argument("--end-date", help="End date in YYYY-MM-DD for range or full-history mode.")
     parser.add_argument(
         "--contract-anchor-date",
         help="Date in YYYY-MM-DD used to build the contract set. Defaults to the selected/end date.",
@@ -296,12 +282,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-contracts", type=int, default=None, help="Optional cap for testing.")
     parser.add_argument("--output-dir", default="Output", help="Folder for output files. Default: Output")
     parser.add_argument("--master-file", help="Optional path to a master CSV file to merge the current run into.")
-    parser.add_argument(
-        "--auto-update-overlap-days",
-        type=int,
-        default=10,
-        help="Used only in auto-update mode. Re-fetch this many calendar days before the latest tradeDate in the master. Default: 10",
-    )
     parser.add_argument(
         "--rerun-failed-from",
         help="Path to a previous main CSV or failed CSV. Re-runs only non-ok contracts.",
@@ -621,26 +601,6 @@ def build_contracts(
                 "assumedCode": cfg["assumedCode"],
             })
 
-    for _, cfg in EUA_FUTURES_CONFIG.items():
-        if area_filter and cfg["area"] not in area_filter:
-            continue
-
-        for i in range(EUA_DISCOVERY_MONTHS):
-            year, month = add_months(target_year, target_month, i)
-            contracts.append({
-                "marketGroup": "EUA_FUTURES",
-                "area": cfg["area"],
-                "commodity": cfg["commodity"],
-                "pricing": cfg["pricing"],
-                "product": cfg["product"],
-                "shortCode": cfg["shortCode"],
-                "maturityType": cfg["maturityType"],
-                "maturity": fmt_maturity(year, month),
-                "delivery": f"EUA {MONTH_NAMES[month - 1]}-{str(year)[-2:]}",
-                "assumedCode": cfg["assumedCode"],
-                "suppressNoRow": True,
-            })
-
     if max_contracts is not None:
         contracts = contracts[:max_contracts]
 
@@ -845,11 +805,7 @@ def load_contracts_from_previous_csv(csv_path: Path) -> tuple[list[dict[str, Any
     return dedupe_contracts(contracts), inferred
 
 
-def resolve_run_config(
-    args: argparse.Namespace,
-    inferred: InferredRunConfig,
-    master_file_path: Path | None = None,
-) -> ResolvedRunConfig:
+def resolve_run_config(args: argparse.Namespace, inferred: InferredRunConfig) -> ResolvedRunConfig:
     mode = args.mode or inferred.mode or "selected"
 
     if mode == "selected":
@@ -898,47 +854,8 @@ def resolve_run_config(
             allow_fallback=False,
         )
 
-    if mode == "auto-update":
-        if master_file_path is None:
-            raise ValueError("Auto-update mode requires --master-file.")
-        latest_trade_date = get_latest_trade_date_from_master(master_file_path)
-        end_date = args.end_date or fmt_date(latest_trade_date)
-        start_date = fmt_date(latest_trade_date - timedelta(days=args.auto_update_overlap_days))
-        contract_anchor_date = args.contract_anchor_date or end_date
-        return ResolvedRunConfig(
-            mode=mode,
-            contract_anchor_date=contract_anchor_date,
-            requested_trade_date=None,
-            window_start_date=start_date,
-            window_end_date=end_date,
-            allow_fallback=False,
-        )
-
     raise ValueError(f"Unsupported mode: {mode}")
 
-def get_latest_trade_date_from_master(master_file: Path) -> date:
-    if not master_file.exists():
-        raise FileNotFoundError(f"Master file not found: {master_file}")
-
-    latest: date | None = None
-
-    with master_file.open("r", newline="", encoding="utf-8-sig") as handle:
-        reader = csv.DictReader(handle)
-        for row in reader:
-            trade_date_raw = (row.get("tradeDate") or "").strip()
-            if not trade_date_raw:
-                continue
-            try:
-                trade_date = parse_trade_date(trade_date_raw)
-            except ValueError:
-                continue
-            if latest is None or trade_date > latest:
-                latest = trade_date
-
-    if latest is None:
-        raise ValueError(f"No valid tradeDate values found in master file: {master_file}")
-
-    return latest
 
 def get_retry_wait_seconds(
     response: requests.Response | None,
@@ -1158,8 +1075,6 @@ def fetch_contract_rows(
                 run_cfg.allow_fallback,
             )
             if selected_row is None:
-                if contract.get("suppressNoRow"):
-                    return []
                 return [
                     build_error_row(
                         mode=run_cfg.mode,
@@ -1189,8 +1104,6 @@ def fetch_contract_rows(
             ]
 
         if not objects:
-            if contract.get("suppressNoRow"):
-                return []
             return [
                 build_error_row(
                     mode=run_cfg.mode,
@@ -1302,7 +1215,7 @@ def main() -> None:
         if not rerun_contracts:
             raise ValueError("No failed rows found in the rerun file.")
 
-    run_cfg = resolve_run_config(args, inferred, master_file_path)
+    run_cfg = resolve_run_config(args, inferred)
     anchor_date = parse_trade_date(run_cfg.contract_anchor_date)
 
     timestamp_suffix = datetime.now().strftime("%d-%m-%y_%H%M")
@@ -1429,20 +1342,6 @@ def main() -> None:
                             error_message=f"Unhandled worker error: {exc}",
                         )
                     ]
-
-                if not contract_rows:
-                    completed_contracts += 1
-
-                    if should_log_progress(completed_contracts, len(contracts), args.progress_every):
-                        logger.info(
-                            "[done %s/%s] %s %s %s -> skipped_no_rows (0 row(s))",
-                            completed_contracts,
-                            len(contracts),
-                            contract["area"],
-                            str(contract["maturityType"]),
-                            contract["delivery"],
-                        )
-                    continue
 
                 for row in contract_rows:
                     main_writer.writerow(row)
