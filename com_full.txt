@@ -1,133 +1,145 @@
-EEX SCRAPER - FULL REFERENCE
-============================
+EEX SCRAPER COMMAND REFERENCE
+=============================
 
-INSTALL
--------
-pip install -r requirements.txt
+1) FULL HISTORICAL BACKFILL INTO MASTER
+---------------------------------------
+python3 eex_scraper.py --mode range --start-date 2026-02-05 --end-date 2026-03-20 --master-file master/eex_master.csv
 
-CORE MODES
-----------
-Selected-date mode
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20
 
-Selected-date mode, small test
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-contracts 5
+2) ONGOING AUTO-UPDATE INTO MASTER
+----------------------------------
+python3 eex_scraper.py --mode auto-update --end-date 2026-03-31 --master-file master/eex_master.csv
 
-Selected-date mode, 2 workers
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-workers 2 --request-gap-seconds 1.0
 
-Selected-date mode, no fallback
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --no-fallback
+3) ONGOING AUTO-UPDATE WITH CUSTOM OVERLAP
+------------------------------------------
+python3 eex_scraper.py --mode auto-update --end-date 2026-03-31 --auto-update-overlap-days 10 --master-file master/eex_master.csv
 
-Range mode
-python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20
 
-Range mode, small test
-python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20 --max-contracts 5
+4) RANGE UPDATE INTO MASTER
+---------------------------
+python3 eex_scraper.py --mode range --start-date 2026-03-18 --end-date 2026-03-31 --master-file master/eex_master.csv
 
-Range mode, one contract
-python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20 --max-contracts 1
 
-Full-history mode
-python3 eex_scraper.py --mode full-history --end-date 2026-03-20 --contract-anchor-date 2026-03-20
+5) SELECTED DATE SCRAPE
+-----------------------
+python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --master-file master/eex_master.csv
 
-Full-history mode with custom start
-python3 eex_scraper.py --mode full-history --end-date 2026-03-20 --contract-anchor-date 2026-03-20 --full-history-start-date 2025-01-01
 
-FILTERING
----------
-Only selected areas
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --areas DE,GB,FR
+6) SMALL TEST RUN
+-----------------
+python3 eex_scraper.py --mode range --start-date 2026-03-16 --end-date 2026-03-20 --max-contracts 20 --master-file master/eex_master.csv
 
-Cap number of contracts
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-contracts 10
 
-RATE / RETRY TUNING
+7) EU-ONLY TEST RUN
 -------------------
-Safer run
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-workers 1 --request-gap-seconds 1.5
+python3 eex_scraper.py --mode range --start-date 2026-03-16 --end-date 2026-03-20 --areas EU --master-file master/eex_master.csv
 
-Moderate run
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-workers 2 --request-gap-seconds 1.0
 
-Increase retries
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-retries 3
+8) CHECK LATEST RAW CSV CREATED
+-------------------------------
+ls -t Output/CSV_*.csv | head -n 1
 
-Adjust adaptive pacing ceiling
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --request-gap-seconds 1.0 --max-request-gap-seconds 4.0
 
-Adjust cooldown behaviour
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --cooldown-threshold 3 --cooldown-window-seconds 15 --cooldown-seconds 30
+9) CHECK LATEST RAW JSON CREATED
+--------------------------------
+ls -t Output/JSON_*.json | head -n 1
 
-Adjust adaptive relaxation
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --relax-after-seconds 60 --relax-factor 0.9
 
-RERUN FAILED
-------------
-Rerun from failed CSV
-python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv
+10) CHECK MASTER FILE EXISTS
+----------------------------
+ls master
 
-Rerun failed more conservatively
-python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv --max-workers 1 --request-gap-seconds 1.5
 
-Rerun failed with more retries
-python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv --max-retries 3
+11) PREVIEW TOP OF MASTER FILE
+------------------------------
+head -n 10 master/eex_master.csv
 
-OUTPUT LOCATION
----------------
-Write to another folder
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --output-dir MyOutput
 
-FILE / OUTPUT INSPECTION
+12) PREVIEW BOTTOM OF MASTER FILE
+---------------------------------
+tail -n 10 master/eex_master.csv
+
+
+13) SEARCH MASTER FOR EUA
+-------------------------
+grep FEUA master/eex_master.csv
+
+
+14) SEARCH MASTER FOR GO
 ------------------------
-List current folder
-ls
+grep EGOW master/eex_master.csv
 
-List Output folder
-ls Output
 
-Preview CSV
-head -n 10 Output/CSV_[21-03-26_0836].csv
+15) SEARCH MASTER FOR GAS SPOT
+------------------------------
+grep TTFDA master/eex_master.csv
 
-Preview failed CSV
-head -n 10 Output/FCSV_[21-03-26_0641].csv
 
-Preview JSON summary
-head -n 40 Output/JSON_[21-03-26_0836].json
+16) SEARCH MASTER FOR GAS FUTURES
+---------------------------------
+grep G3B master/eex_master.csv
+grep G3Q master/eex_master.csv
+grep G3S master/eex_master.csv
+grep G3Y master/eex_master.csv
 
-Search for rate-limited rows in a CSV
-grep rate_limited Output/FCSV_[21-03-26_0641].csv
 
-Count lines in a CSV
-wc -l Output/CSV_[21-03-26_0836].csv
+17) SEARCH MASTER FOR POWER AREA
+--------------------------------
+grep ",FI," master/eex_master.csv
+grep ",DE," master/eex_master.csv
+grep ",GB," master/eex_master.csv
 
-TERMINAL / FILE MANAGEMENT
+
+18) COUNT MASTER ROWS
+---------------------
+wc -l master/eex_master.csv
+
+
+19) BACK UP CURRENT SCRAPER
+---------------------------
+cp eex_scraper.py eex_scraper_backup.py
+
+
+20) BACK UP MASTER FILE
+-----------------------
+cp master/eex_master.csv master/eex_master_backup.csv
+
+
+21) STOP A RUN IN TERMINAL
 --------------------------
-Stop a running scrape
 Ctrl+C
 
-Rename a file
-mv old_name.py new_name.py
 
-Delete a file
-rm filename.py
+22) CHECK IF SCRAPER IS STILL RUNNING
+-------------------------------------
+ps -ef | grep eex_scraper.py
 
-Delete an output file
-rm Output/CSV_[21-03-26_0836].csv
 
-GIT
----
-Check status
-git status
-
-Stage all changes
+23) SAVE CURRENT CODE TO GIT
+----------------------------
 git add .
-
-Commit changes
 git commit -m "Update EEX scraper"
-
-Push changes
 git push
 
-Pull latest changes
-git pull
+
+24) CREATE NEW BACKUP BEFORE CHANGES
+------------------------------------
+cp eex_scraper.py eex_scraper_before_changes.py
+
+
+NOTES
+=====
+- master file:
+  master/eex_master.csv
+
+- raw output files:
+  Output/CSV_[dd-mm-yy_hhmm].csv
+  Output/JSON_[dd-mm-yy_hhmm].json
+  Output/LOG_[dd-mm-yy_hhmm].log
+
+- recommended normal workflow:
+  use auto-update mode once or twice a week
+
+- recommended normal command:
+  python3 eex_scraper.py --mode auto-update --end-date YYYY-MM-DD --master-file master/eex_master.csv

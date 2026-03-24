@@ -1,0 +1,62 @@
+2026-03-24 23:27:58,832 | INFO | Run mode: full
+2026-03-24 23:27:58,832 | INFO | Scrape mode: auto-update
+2026-03-24 23:27:58,832 | INFO | Built 455 contracts.
+2026-03-24 23:27:58,832 | INFO | Contract anchor date: 2026-03-24
+2026-03-24 23:27:58,832 | INFO | Window: 2026-03-14 -> 2026-03-24
+2026-03-24 23:27:58,833 | INFO | Adaptive pacing: base 1.00s, max 3.00s, workers 1.
+2026-03-24 23:27:58,833 | INFO | 429 cooldown rule: 3 hit(s) within 15.0s triggers a 30.0s global pause.
+2026-03-24 23:27:58,833 | INFO | Master merge target: /workspaces/scrape/master/eex_master.csv
+2026-03-24 23:27:58,833 | INFO | [queued 1/455] FI Month Mar-26 (FNBM, 202603)
+2026-03-24 23:27:58,834 | INFO | [queued 25/455] SE1 Month Jul-26 (1SBM, 202607)
+2026-03-24 23:27:58,834 | INFO | [queued 50/455] SE2 Quarter Q4-26 (2SBQ, 202610)
+2026-03-24 23:27:58,834 | INFO | [queued 75/455] SE3 Year Cal-27 (3SBY, 202701)
+2026-03-24 23:27:58,835 | INFO | [queued 100/455] SE4 Year Cal-32 (4SBY, 203201)
+2026-03-24 23:27:58,836 | INFO | [queued 125/455] GB Month Jul-26 (FUBM, 202607)
+2026-03-24 23:27:58,836 | INFO | [queued 150/455] ES Quarter Q4-26 (FEBQ, 202610)
+2026-03-24 23:27:58,836 | INFO | [queued 175/455] IT Year Cal-27 (FDBY, 202701)
+2026-03-24 23:27:58,837 | INFO | [queued 200/455] NL Year Cal-32 (Q0BY, 203201)
+2026-03-24 23:27:58,837 | INFO | [queued 225/455] FR Month Jul-26 (F7BM, 202607)
+2026-03-24 23:27:58,838 | INFO | [queued 250/455] NO1 Quarter Q4-26 (1NBQ, 202610)
+2026-03-24 23:27:58,838 | INFO | [queued 275/455] NO2 Year Cal-27 (2NBY, 202701)
+2026-03-24 23:27:58,838 | INFO | [queued 300/455] NO3 Year Cal-32 (3NBY, 203201)
+2026-03-24 23:27:58,841 | INFO | [queued 325/455] NO5 Month Jul-26 (5NBM, 202607)
+2026-03-24 23:27:58,841 | INFO | [queued 350/455] TTF Quarter Gas Q4-26 (G3BQ, 202610)
+2026-03-24 23:27:58,841 | INFO | [queued 375/455] EU Month EUA Jun-26 (FEUA, 202606)
+2026-03-24 23:27:58,842 | INFO | [queued 400/455] EU Month EUA Jul-28 (FEUA, 202807)
+2026-03-24 23:27:58,842 | INFO | [queued 425/455] EU Month EUA Aug-30 (FEUA, 203008)
+2026-03-24 23:27:58,842 | INFO | [queued 450/455] EU Month EUA Sep-32 (FEUA, 203209)
+2026-03-24 23:27:58,843 | INFO | [queued 455/455] EU Month EUA Feb-33 (FEUA, 203302)
+2026-03-24 23:27:59,856 | INFO | [done 1/455] FI Month Mar-26 -> ok (6 row(s))
+2026-03-24 23:28:23,811 | INFO | [done 25/455] SE1 Month Jul-26 -> ok (6 row(s))
+2026-03-24 23:28:48,979 | INFO | [done 50/455] SE2 Quarter Q4-26 -> ok (6 row(s))
+2026-03-24 23:29:13,917 | INFO | [done 75/455] SE3 Year Cal-27 -> ok (6 row(s))
+2026-03-24 23:29:38,931 | INFO | [done 100/455] SE4 Year Cal-32 -> ok (6 row(s))
+2026-03-24 23:30:05,681 | INFO | [done 125/455] GB Month Jul-26 -> ok (6 row(s))
+2026-03-24 23:30:40,383 | INFO | [done 150/455] ES Quarter Q4-26 -> ok (6 row(s))
+2026-03-24 23:31:08,990 | INFO | [done 175/455] IT Year Cal-27 -> ok (6 row(s))
+2026-03-24 23:31:34,109 | INFO | [done 200/455] NL Year Cal-32 -> ok (6 row(s))
+2026-03-24 23:31:59,202 | INFO | [done 225/455] FR Month Jul-26 -> ok (6 row(s))
+2026-03-24 23:32:24,243 | INFO | [done 250/455] NO1 Quarter Q4-26 -> ok (6 row(s))
+2026-03-24 23:32:49,220 | INFO | [done 275/455] NO2 Year Cal-27 -> ok (6 row(s))
+2026-03-24 23:33:14,546 | INFO | [done 300/455] NO3 Year Cal-32 -> ok (6 row(s))
+2026-03-24 23:33:39,828 | INFO | [done 325/455] NO5 Month Jul-26 -> ok (6 row(s))
+2026-03-24 23:34:05,251 | INFO | [done 350/455] TTF Quarter Gas Q4-26 -> ok (6 row(s))
+2026-03-24 23:34:31,048 | INFO | [done 375/455] EU Month EUA Jun-26 -> ok (6 row(s))
+2026-03-24 23:35:00,631 | INFO | [done 400/455] EU Month EUA Jul-28 -> ok (6 row(s))
+2026-03-24 23:35:27,920 | INFO | [done 425/455] EU Month EUA Aug-30 -> ok (6 row(s))
+2026-03-24 23:35:54,124 | INFO | [done 450/455] EU Month EUA Sep-32 -> ok (6 row(s))
+2026-03-24 23:35:59,231 | INFO | [done 455/455] EU Month EUA Feb-33 -> ok (6 row(s))
+2026-03-24 23:35:59,458 | INFO | Status summary:
+2026-03-24 23:35:59,458 | INFO |   ok: 2734
+2026-03-24 23:35:59,458 | INFO | Saved main CSV: /workspaces/scrape/Output/CSV_[24-03-26_2327].csv
+2026-03-24 23:35:59,458 | INFO | No failed rows. Failed CSV not created.
+2026-03-24 23:35:59,458 | INFO | Updated master CSV: /workspaces/scrape/master/eex_master.csv
+2026-03-24 23:35:59,458 | INFO | Master rows before merge: 15316
+2026-03-24 23:35:59,458 | INFO | Master rows after merge: 15316
+2026-03-24 23:35:59,458 | INFO | Total output rows: 2734
+2026-03-24 23:35:59,458 | INFO | Total ok rows: 2734
+2026-03-24 23:35:59,458 | INFO | Duration seconds: 480.62
+2026-03-24 23:35:59,458 | INFO | Throughput contracts/minute: 56.8
+2026-03-24 23:35:59,458 | INFO | Average seconds/contract: 1.06
+2026-03-24 23:35:59,458 | INFO | Final adaptive request gap: 1.00s
+2026-03-24 23:35:59,459 | INFO | Saved summary JSON: /workspaces/scrape/Output/JSON_[24-03-26_2327].json
