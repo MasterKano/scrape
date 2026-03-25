@@ -1,0 +1,26 @@
+2026-03-25 00:33:56,910 | INFO | Run mode: full
+2026-03-25 00:33:56,911 | INFO | Scrape mode: range
+2026-03-25 00:33:56,911 | INFO | Built 2 contracts.
+2026-03-25 00:33:56,911 | INFO | Contract anchor date: 2026-03-20
+2026-03-25 00:33:56,912 | INFO | Window: 2026-03-16 -> 2026-03-20
+2026-03-25 00:33:56,912 | INFO | Adaptive pacing: base 1.00s, max 3.00s, workers 1.
+2026-03-25 00:33:56,912 | INFO | 429 cooldown rule: 3 hit(s) within 15.0s triggers a 30.0s global pause.
+2026-03-25 00:33:56,912 | INFO | Master merge target: /workspaces/scrape/master/eex_master.csv
+2026-03-25 00:33:56,912 | INFO | [queued 1/2] ICE Month Coal Dec-26 (ICE_API2, 202612)
+2026-03-25 00:33:56,915 | INFO | [queued 2/2] ICE Month Coal Dec-27 (ICE_API2, 202712)
+2026-03-25 00:33:57,228 | INFO | [done 1/2] ICE Month Coal Dec-26 -> ok (5 row(s))
+2026-03-25 00:33:58,110 | INFO | [done 2/2] ICE Month Coal Dec-27 -> ok (5 row(s))
+2026-03-25 00:33:58,355 | INFO | Status summary:
+2026-03-25 00:33:58,355 | INFO |   ok: 10
+2026-03-25 00:33:58,355 | INFO | Saved main CSV: /workspaces/scrape/Output/CSV_[25-03-26_0033].csv
+2026-03-25 00:33:58,355 | INFO | No failed rows. Failed CSV not created.
+2026-03-25 00:33:58,355 | INFO | Updated master CSV: /workspaces/scrape/master/eex_master.csv
+2026-03-25 00:33:58,355 | INFO | Master rows before merge: 15341
+2026-03-25 00:33:58,355 | INFO | Master rows after merge: 15351
+2026-03-25 00:33:58,355 | INFO | Total output rows: 10
+2026-03-25 00:33:58,355 | INFO | Total ok rows: 10
+2026-03-25 00:33:58,355 | INFO | Duration seconds: 1.44
+2026-03-25 00:33:58,355 | INFO | Throughput contracts/minute: 83.33
+2026-03-25 00:33:58,355 | INFO | Average seconds/contract: 0.72
+2026-03-25 00:33:58,356 | INFO | Final adaptive request gap: 1.00s
+2026-03-25 00:33:58,356 | INFO | Saved summary JSON: /workspaces/scrape/Output/JSON_[25-03-26_0033].json

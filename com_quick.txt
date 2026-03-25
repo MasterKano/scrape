@@ -1,44 +1,5 @@
-EEX SCRAPER - QUICK USE
-=======================
 
-Future update master file:
-python3 eex_scraper.py --mode range --start-date YYYY-MM-DD --end-date YYYY-MM-DD --master-file master/eex_master.csv
+python3 eex_scraper.py --mode auto-update --end-date YYYY-MM-DD --master-file master/eex_master.csv
 
-Install dependencies
-pip install -r requirements.txt
-
-Selected-date mode
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20
-
-Selected-date test
-python3 eex_scraper.py --mode selected --trade-date 2026-03-20 --max-contracts 5
-
-Selected-date rerun failed
-python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv
-
-Selected-date rerun failed conservatively
-python3 eex_scraper.py --rerun-failed-from Output/FCSV_[21-03-26_0641].csv --max-workers 1 --request-gap-seconds 1.5
-
-Range mode
-python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20
-
-Range mode test
-python3 eex_scraper.py --mode range --start-date 2026-02-20 --end-date 2026-03-20 --contract-anchor-date 2026-03-20 --max-contracts 5
-
-Full-history mode
-python3 eex_scraper.py --mode full-history --end-date 2026-03-20 --contract-anchor-date 2026-03-20
-
-Preview CSV
-head -n 10 Output/CSV_[21-03-26_0836].csv
-
-List output files
-ls Output
-
-Stop a run
-Ctrl+C
-
-Push code changes
-git add .
-git commit -m "Update EEX scraper"
-git push
+python3 eex_scraper.py --mode range --start-date 2026-03-18 --end-date 2026-03-31 --areas ICE --master-file master/eex_master.csv
 

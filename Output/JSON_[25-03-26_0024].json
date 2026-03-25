@@ -1,0 +1,49 @@
+{
+  "runMode": "full",
+  "scrapeMode": "range",
+  "contractAnchorDate": "2026-03-20",
+  "requestedTradeDate": null,
+  "startDate": "2026-03-16",
+  "endDate": "2026-03-20",
+  "requestGapSeconds": 1.0,
+  "maxRequestGapSeconds": 3.0,
+  "maxRetries": 2,
+  "retryDelaySeconds": 5.0,
+  "requestTimeoutSeconds": 20.0,
+  "allowPreviousTradeDayFallback": false,
+  "requestedAreas": [
+    "ICE"
+  ],
+  "areasInRun": [
+    "ICE"
+  ],
+  "totalContracts": 5,
+  "totalOutputRows": 25,
+  "totalOkRows": 25,
+  "failedRows": 0,
+  "statusSummary": {
+    "ok": 25
+  },
+  "durationSeconds": 4.5,
+  "throughputContractsPerMinute": 66.67,
+  "averageSecondsPerContract": 0.9,
+  "cooldownThreshold": 3,
+  "cooldownWindowSeconds": 15.0,
+  "cooldownSeconds": 30.0,
+  "relaxAfterSeconds": 60.0,
+  "relaxFactor": 0.9,
+  "finalAdaptiveRequestGapSeconds": 1.0,
+  "files": {
+    "mainCsv": "/workspaces/scrape/Output/CSV_[25-03-26_0024].csv",
+    "failedCsv": null,
+    "summaryJson": "/workspaces/scrape/Output/JSON_[25-03-26_0024].json",
+    "logFile": "/workspaces/scrape/Output/LOG_[25-03-26_0024].log",
+    "masterCsv": "/workspaces/scrape/master/eex_master.csv"
+  },
+  "masterMerge": {
+    "enabled": true,
+    "rowsBefore": 15316,
+    "rowsAfter": 15341
+  },
+  "generatedAt": "2026-03-25T00:24:40"
+}

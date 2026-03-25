@@ -143,3 +143,36 @@ NOTES
 
 - recommended normal command:
   python3 eex_scraper.py --mode auto-update --end-date YYYY-MM-DD --master-file master/eex_master.csv
+
+
+ICE COAL COMMANDS
+=================
+
+1) TEST ICE COAL
+----------------
+python3 eex_scraper.py --mode range --start-date 2026-03-16 --end-date 2026-03-20 --areas ICE --master-file master/eex_master.csv
+
+
+2) BACKFILL ICE COAL
+--------------------
+python3 eex_scraper.py --mode range --start-date 2026-02-05 --end-date 2026-03-20 --areas ICE --master-file master/eex_master.csv
+
+
+3) ICE COAL ONGOING UPDATE
+--------------------------
+python3 eex_scraper.py --mode range --start-date 2026-03-18 --end-date 2026-03-31 --areas ICE --master-file master/eex_master.csv
+
+
+4) CHECK ICE COAL IN MASTER
+---------------------------
+grep ICE_COAL_FUTURES master/eex_master.csv
+
+
+5) CHECK DEC-26 COAL IN MASTER
+------------------------------
+grep 202612 master/eex_master.csv | grep ICE_API2
+
+
+6) CHECK DEC-27 COAL IN MASTER
+------------------------------
+grep 202712 master/eex_master.csv | grep ICE_API2

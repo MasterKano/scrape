@@ -1,0 +1,11 @@
+mode,contractAnchorDate,marketGroup,area,commodity,pricing,product,maturityType,delivery,requestedTradeDate,windowStartDate,windowEndDate,tradeDate,status,settlementPrice,volume,grossOpenInterest,shortCode,maturity,assumedCode,httpStatus,errorMessage
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-26,,2026-03-16,2026-03-20,2026-03-20,ok,136.05,,,ICE_API2,202612,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-26,,2026-03-16,2026-03-20,2026-03-19,ok,138.05,,,ICE_API2,202612,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-26,,2026-03-16,2026-03-20,2026-03-18,ok,133.35,,,ICE_API2,202612,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-26,,2026-03-16,2026-03-20,2026-03-17,ok,131.2,,,ICE_API2,202612,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-26,,2026-03-16,2026-03-20,2026-03-16,ok,128.3,,,ICE_API2,202612,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-27,,2026-03-16,2026-03-20,2026-03-20,ok,130.3,,,ICE_API2,202712,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-27,,2026-03-16,2026-03-20,2026-03-19,ok,132.75,,,ICE_API2,202712,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-27,,2026-03-16,2026-03-20,2026-03-18,ok,127.55,,,ICE_API2,202712,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-27,,2026-03-16,2026-03-20,2026-03-17,ok,125.9,,,ICE_API2,202712,False,200,
+range,2026-03-20,ICE_COAL_FUTURES,ICE,COAL,F,API2 Rotterdam,Month,Coal Dec-27,,2026-03-16,2026-03-20,2026-03-16,ok,123.5,,,ICE_API2,202712,False,200,
