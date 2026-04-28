@@ -1779,7 +1779,8 @@ def main() -> None:
 
                 for row in contract_rows:
                     main_writer.writerow(row)
-                    all_rows_for_master.append(row)
+                    if row.get("status") == "ok" and row.get("tradeDate"):
+                        all_rows_for_master.append(row)
                     total_output_rows += 1
                     unique_areas.add(row["area"])
                     summary[row["status"]] += 1
