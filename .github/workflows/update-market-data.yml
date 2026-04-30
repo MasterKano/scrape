@@ -52,14 +52,20 @@ jobs:
             END_DATE="$(date -u +%F)"
           fi
 
+          MAX_WORKERS="${{ github.event.inputs.max_workers }}"
+          if [ -z "$MAX_WORKERS" ]; then
+            MAX_WORKERS="1"
+          fi
+
           echo "Using end date: $END_DATE"
+          echo "Using max workers: $MAX_WORKERS"
 
           python eex_scraper.py \
             --mode auto-update \
             --master-file master/eex_master.csv \
             --output-dir Output \
             --end-date "$END_DATE" \
-            --max-workers "${{ github.event.inputs.max_workers }}" \
+            --max-workers "$MAX_WORKERS" \
             --request-gap-seconds 1.0 \
             --max-request-gap-seconds 3.0
 
