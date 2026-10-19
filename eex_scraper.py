@@ -48,6 +48,8 @@ ICE_REQUEST_HEADERS = {
 }
 
 POWER_AREAS = {
+    "DK1": {"codes": {"Month": "1DBM", "Quarter": "1DBQ", "Year": "1DBY"}, "assumed_types": []},
+    "DK2": {"codes": {"Month": "2DBM", "Quarter": "2DBQ", "Year": "2DBY"}, "assumed_types": []},
     "FI": {"codes": {"Month": "FNBM", "Quarter": "FNBQ", "Year": "FNBY"}, "assumed_types": []},
     "SE1": {"codes": {"Month": "1SBM", "Quarter": "1SBQ", "Year": "1SBY"}, "assumed_types": []},
     "SE2": {"codes": {"Month": "2SBM", "Quarter": "2SBQ", "Year": "2SBY"}, "assumed_types": []},
